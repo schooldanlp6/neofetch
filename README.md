@@ -24,6 +24,12 @@ You can further configure Neofetch to display exactly what you want it to. Throu
 Neofetch supports almost 150 different operating systems. From Linux to Windows, all the way to more obscure operating systems like Minix, AIX and Haiku. If your favourite operating system is unsupported: Open up an issue and support will be added.
 
 ### Changelog
+#### 7.2.5
+fixed the script
+
+neofetch reborn was put on hold since 7.2.4
+#### 7.2.4
+added Apple Device configs that accidentally broke the script
 #### 7.2.3
 added the temux pacman and fixed typos
 #### 7.2.2
