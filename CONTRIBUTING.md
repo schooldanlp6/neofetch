@@ -1,5 +1,5 @@
 # How to Contribute
-
+# Please don't for the time beeing as I plan a major rewrite
 <!-- vim-markdown-toc GFM -->
 
 * [Coding Conventions](#coding-conventions)
