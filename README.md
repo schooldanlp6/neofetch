@@ -30,6 +30,10 @@ git clone https://github.com/schooldanlp6/neofetch
 cd neofetch
 
 sudo make install
+
+#### 7.2.6
+make neofetch lighter and add ascii art
+
 #### 7.2.5
 fixed the script
 
