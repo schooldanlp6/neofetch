@@ -31,6 +31,9 @@ cd neofetch
 
 sudo make install
 
+#### 7.2.6h1
+minor release update (man will not be updated) adding Splendian _my own debian based distro_ that will get pushed publicly to the repos at some point
+
 #### 7.2.6
 make neofetch lighter and add ascii art
 
