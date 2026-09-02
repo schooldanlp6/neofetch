@@ -25,11 +25,13 @@ Neofetch supports almost 150 different operating systems. From Linux to Windows,
 
 ### Changelog
 #### install latest version from master
+```
 git clone https://github.com/schooldanlp6/neofetch
-
 cd neofetch
-
 sudo make install
+```
+#### Debian and Alpine Packages:
+- Debian and Alpine packages will only be built on release
 
 #### 7.2.7 - Freaky Fox (planned for 09/2026)
 - general bug and stability fixes
