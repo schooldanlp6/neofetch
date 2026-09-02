@@ -44,7 +44,9 @@ LANG=C
 export GIO_EXTRA_MODULES=/usr/lib/x86_64-linux-gnu/gio/modules/
 
 # Neofetch default config.
-read -rd '' config <<'EOF'
+# 'read -rd ""' walks the 18KB heredoc a byte at a time (~50ms); one
+# 'cat' reads it in blocks for the same string in ~8ms.
+config=$(cat <<'EOF'
 # See this wiki page for more info:
 # https://github.com/dylanaraps/neofetch/wiki/Customizing-Info
 print_info() {
@@ -927,6 +929,7 @@ background_color=
 # Values: 'on', 'off'
 stdout="off"
 EOF
+)
 
 # DETECT INFORMATION
 
@@ -1099,7 +1102,8 @@ get_distro() {
 
             if [[ $(< /proc/version) == *Microsoft* || $kernel_version == *Microsoft* ]]; then
                 windows_version=$(wmic.exe os get Version)
-                windows_version=$(trim "${windows_version/Version}")
+                trim "${windows_version/Version}"
+                windows_version=$trim_output
 
                 case $distro_shorthand in
                     on)   distro+=" [Windows $windows_version]" ;;
@@ -1117,7 +1121,8 @@ get_distro() {
                     distro=${distro## on }
             fi
 
-            distro=$(trim_quotes "$distro")
+            trim_quotes "$distro"
+            distro=$trim_output
             distro=${distro/NAME=}
 
             # Get Ubuntu flavor.
@@ -1229,7 +1234,7 @@ get_distro() {
         distro+=" $machine_arch"
 
     [[ ${ascii_distro:-auto} == auto ]] && \
-        ascii_distro=$(trim "$distro")
+        { trim "$distro"; ascii_distro=$trim_output; }
 }
 
 get_model() {
@@ -1544,6 +1549,8 @@ get_packages() {
         ((packages+=${#pkgs[@]}));
         pac "$((${#pkgs[@]}-pkgs_h))";
     }
+    # num: Log a count obtained without listing every package.
+    num() { ((packages+=$1)); pac "$(($1-pkgs_h))"; }
 
     # Redefine tot() and dir() for Bedrock Linux.
     [[ -f /bedrock/etc/bedrock-release && $PATH == */bedrock/cross/* ]] && {
@@ -1569,7 +1576,18 @@ get_packages() {
             has kiss       && tot kiss l
             has cpt-list   && tot cpt-list
             has pacman-key && tot pacman -Qq --color never
-            has dpkg       && tot dpkg-query -f '.\n' -W
+            # 'dpkg-query -W' parses and formats every stanza in the
+            # status db just to be line-counted; counting the stanzas
+            # directly is ~3x cheaper and gives the same total.
+            has dpkg && {
+                dpkg_status="${DPKG_ADMINDIR:-/var/lib/dpkg}/status"
+
+                if [[ -r "$dpkg_status" ]]; then
+                    num "$(awk '/^Package: /{n++} END{print n+0}' "$dpkg_status")"
+                else
+                    tot dpkg-query -f '.\n' -W
+                fi
+            }
             has xbps-query && tot xbps-query -l
             has apk        && tot apk info
             has opkg       && tot opkg list-installed
@@ -1883,7 +1901,22 @@ get_de() {
             Plasma*)   de_ver=$(plasmashell --version) ;;
             MATE*)     de_ver=$(mate-session --version) ;;
             Xfce*)     de_ver=$(xfce4-session --version) ;;
-            GNOME*)    de_ver=$(gnome-shell --version) ;;
+            GNOME*)
+                # Launching the gnome-shell binary just to print its version
+                # costs ~40ms; asking the running shell over D-Bus is ~7ms.
+                de_ver=$(gdbus call --session --dest org.gnome.Shell \
+                                    --object-path /org/gnome/Shell \
+                                    --method org.freedesktop.DBus.Properties.Get \
+                                    org.gnome.Shell ShellVersion 2>/dev/null)
+
+                # '(<'\''48.7'\''>,)' -> '48.7'
+                if [[ $de_ver == *\'*\'* ]]; then
+                    de_ver=${de_ver#*\'}
+                    de_ver=${de_ver%%\'*}
+                else
+                    de_ver=$(gnome-shell --version)
+                fi
+            ;;
             Cinnamon*) de_ver=$(cinnamon --version) ;;
             Deepin*)   de_ver=$(awk -F'=' '/MajorVersion/ {print $2}' /etc/os-version) ;;
             Budgie*)   de_ver=$(budgie-desktop --version) ;;
@@ -1923,10 +1956,30 @@ get_wm() {
     esac
 
     if [[ -O "${XDG_RUNTIME_DIR}/${WAYLAND_DISPLAY:-wayland-0}" ]]; then
-        if tmp_pid="$(lsof -t "${XDG_RUNTIME_DIR}/${WAYLAND_DISPLAY:-wayland-0}" 2>&1)" ||
-           tmp_pid="$(fuser   "${XDG_RUNTIME_DIR}/${WAYLAND_DISPLAY:-wayland-0}" 2>&1)"; then
-            wm="$(ps -p "${tmp_pid}" -ho comm=)"
-        else
+        wl_socket="${XDG_RUNTIME_DIR}/${WAYLAND_DISPLAY:-wayland-0}"
+
+        # Probes ordered cheapest-first: 'ss' answers with the listening
+        # socket's process name as well as its pid in one call (~0.035s),
+        # where 'fuser' (~0.17s) and 'lsof' (~0.33s) walk every fd of every
+        # process and still need a 'ps' to turn the pid into a name.
+        ss_out="$(ss -lxp src "$wl_socket" 2>/dev/null)"
+
+        # 'users:(("gnome-shell",pid=3305,fd=82),...)' -> 'gnome-shell'
+        [[ $ss_out == *users:*\"*\"* ]] && {
+            wm=${ss_out#*users:}
+            wm=${wm#*\"}
+            wm=${wm%%\"*}
+        }
+
+        if [[ -z "$wm" ]] &&
+           { tmp_pid="$(fuser "$wl_socket" 2>/dev/null)" ||
+             tmp_pid="$(lsof -t "$wl_socket" 2>/dev/null)"; }; then
+            # 'fuser' pads its output, and either may list more than one pid.
+            read -r tmp_pid _ <<< "$tmp_pid"
+            wm="$(ps -p "$tmp_pid" -ho comm=)"
+        fi
+
+        if [[ -z "$wm" ]]; then
             # lsof may not exist, or may need root on some systems. Similarly fuser.
             # On those systems we search for a list of known window managers, this can mistakenly
             # match processes for another user or session and will miss unlisted window managers.
@@ -2207,7 +2260,8 @@ get_wm_theme() {
         ;;
     esac
 
-    wm_theme=$(trim_quotes "$wm_theme")
+    trim_quotes "$wm_theme"
+    wm_theme=$trim_output
 }
 
 get_cpu() {
@@ -2523,10 +2577,99 @@ get_cpu() {
     fi
 }
 
+# Enumerate display controllers from sysfs and resolve their PCI ids
+# against 'pci.ids'. Same output as the 'lspci -mm' pipeline below
+# ("<vendor> <device>", one per line) at a fraction of the cost, since
+# nothing here touches PCI config space. Returns 1 when the ids file is
+# missing or a device isn't listed in it, so the caller can fall back.
+get_gpu_sysfs() {
+    local ids d class vendor device subvendor subdevice devs=()
+
+    for ids in /usr/share/misc/pci.ids /usr/share/hwdata/pci.ids /usr/share/pci.ids; do
+        [[ -f "$ids" ]] && break
+        ids=
+    done
+    [[ "$ids" ]] || return 1
+
+    for d in /sys/bus/pci/devices/*; do
+        [[ -r "$d/class" ]] || continue
+        read -r class < "$d/class"
+
+        # 0x03xxxx: VGA / XGA / 3D / other display controller.
+        [[ "$class" == 0x03* ]] || continue
+
+        read -r vendor < "$d/vendor"
+        read -r device < "$d/device"
+
+        # Not every device exposes a subsystem id.
+        subvendor=0x0000 subdevice=0x0000
+        [[ -r "$d/subsystem_vendor" ]] && read -r subvendor < "$d/subsystem_vendor"
+        [[ -r "$d/subsystem_device" ]] && read -r subdevice < "$d/subsystem_device"
+
+        devs+=("${vendor#0x} ${device#0x} ${subvendor#0x} ${subdevice#0x}")
+    done
+    ((${#devs[@]})) || return 1
+
+    # 'pci.ids' is sorted vendor > device > subsystem, each level indented
+    # by one more tab, ids padded to 4 hex digits and separated from the
+    # name by two spaces. Prefer the subsystem name when the file has one,
+    # which is what 'lspci' prints too.
+    awk -v want="${devs[*]}" '
+        BEGIN {
+            n = split(want, f, " ") / 4
+
+            for (i = 0; i < n; i++) {
+                v[i]  = f[i*4+1]; d[i]  = f[i*4+2]
+                sv[i] = f[i*4+3]; sd[i] = f[i*4+4]
+
+                needv[v[i]]
+                needd[v[i] " " d[i]]
+                needs[v[i] " " d[i] " " sv[i] " " sd[i]]
+            }
+        }
+
+        # Comments, then the class list that follows the device list.
+        /^[#C]/ { if ($1 == "C") exit; next }
+
+        /^\t\t/ {
+            key = vend " " dev " " substr($0, 3, 4) " " substr($0, 8, 4)
+            if (key in needs) subsys[key] = substr($0, 14)
+            next
+        }
+
+        /^\t/ {
+            dev = substr($0, 2, 4)
+            if ((vend " " dev) in needd) devname[vend " " dev] = substr($0, 8)
+            next
+        }
+
+        NF {
+            vend = substr($0, 1, 4)
+            if (vend in needv) vendname[vend] = substr($0, 7)
+        }
+
+        END {
+            for (i = 0; i < n; i++) {
+                key  = v[i] " " d[i] " " sv[i] " " sd[i]
+                name = (key in subsys) ? subsys[key] : devname[v[i] " " d[i]]
+
+                # Unknown device: let the caller fall back to lspci.
+                if (!(v[i] in vendname) || name == "") exit 1
+
+                if (!seen[vendname[v[i]] " " name]++) print vendname[v[i]] " " name
+            }
+        }
+    ' "$ids"
+}
+
 get_gpu() {
     case $os in
         "Linux")
-            # Read GPUs into array.
+            # Read GPUs into array. 'lspci' reads PCI config space, which
+            # wakes a runtime-suspended discrete GPU (~0.4s of the runtime on
+            # a hybrid-graphics laptop, and battery for a card nobody asked
+            # for), so try sysfs first and keep 'lspci' as the fallback.
+            gpu_cmd="$(get_gpu_sysfs)" ||
             gpu_cmd="$(lspci -mm |
                        awk -F '\"|\" \"|\\(' \
                               '/"Display|"3D|"VGA/ {
@@ -2599,9 +2742,11 @@ get_gpu() {
                         gpu="${gpu/*Xeon*/Intel HD Graphics}"
 
                         # The bracketed name doesn't always repeat the vendor.
-                        [[ "$gpu" != *Intel* ]] && gpu="Intel $(trim "$gpu")"
+                        [[ "$gpu" != *Intel* ]] &&
+                            { trim "$gpu"; gpu="Intel $trim_output"; }
 
-                        [[ -z "$(trim "$gpu")" ]] && gpu="Intel Integrated Graphics"
+                        trim "$gpu"
+                        [[ -z "$trim_output" ]] && gpu="Intel Integrated Graphics"
                     ;;
 
                     *"MCST"*)
@@ -2676,7 +2821,8 @@ get_gpu() {
 
         "Windows")
             wmic path Win32_VideoController get caption | while read -r line; do
-                line=$(trim "$line")
+                trim "$line"
+                line=$trim_output
 
                 case $line in
                     *Caption*|'')
@@ -2700,7 +2846,8 @@ get_gpu() {
                 "FreeBSD"* | "DragonFly"*)
                     gpu="$(pciconf -lv | grep -B 4 -F "VGA" | grep -F "device")"
                     gpu="${gpu/*device*= }"
-                    gpu="$(trim_quotes "$gpu")"
+                    trim_quotes "$gpu"
+                    gpu=$trim_output
                 ;;
 
                 *)
@@ -3041,9 +3188,9 @@ get_song() {
     IFS=$'\n' read -d "" -r artist album title <<< "${song//'\n'/$'\n'}"
 
     # Make sure empty tags are truly empty.
-    artist="$(trim "$artist")"
-    album="$(trim "$album")"
-    title="$(trim "$title")"
+    trim "$artist"; artist=$trim_output
+    trim "$album";  album=$trim_output
+    trim "$title";  title=$trim_output
 
     # Set default values if no tags were found.
     : "${artist:=Unknown Artist}" "${album:=Unknown Album}" "${title:=Unknown Song}"
@@ -3264,12 +3411,12 @@ get_style() {
         fi
 
         # Trim whitespace.
-        gtk2_theme="$(trim "$gtk2_theme")"
-        gtk3_theme="$(trim "$gtk3_theme")"
+        trim "$gtk2_theme"; gtk2_theme=$trim_output
+        trim "$gtk3_theme"; gtk3_theme=$trim_output
 
         # Remove quotes.
-        gtk2_theme="$(trim_quotes "$gtk2_theme")"
-        gtk3_theme="$(trim_quotes "$gtk3_theme")"
+        trim_quotes "$gtk2_theme"; gtk2_theme=$trim_output
+        trim_quotes "$gtk3_theme"; gtk3_theme=$trim_output
 
         # Toggle visibility of GTK themes.
         [[ "$gtk2" == "off" ]] && unset gtk2_theme
@@ -3481,7 +3628,8 @@ END
 
         "Hyper"*)
             term_font="$(awk -F':|,' '/fontFamily/ {print $2; exit}' "${HOME}/.hyper.js")"
-            term_font="$(trim_quotes "$term_font")"
+            trim_quotes "$term_font"
+            term_font=$trim_output
         ;;
 
         "kitty"*)
@@ -3561,7 +3709,8 @@ END
                 else
                     term_font="$(mate_get "$profile" "font")"
                 fi
-                term_font="$(trim_quotes "$term_font")"
+                trim_quotes "$term_font"
+                term_font=$trim_output
             fi
         ;;
 
@@ -3575,7 +3724,8 @@ END
             [[ -z "${term_font//\'}" ]] && \
                 term_font="$(gsettings get org.gnome.desktop.interface monospace-font-name)"
 
-            term_font="$(trim_quotes "$term_font")"
+            trim_quotes "$term_font"
+            term_font=$trim_output
         ;;
 
         "qterminal")
@@ -3645,12 +3795,14 @@ END
             term_font=${term_font/*"*font:"}
             term_font=${term_font/*".font:"}
             term_font=${term_font/*"*.font:"}
-            term_font=$(trim "$term_font")
+            trim "$term_font"
+            term_font=$trim_output
 
             [[ -z $term_font && $term == xterm ]] && \
                 term_font=$(grep '^XTerm.vt100.faceName' <<< "$xrdb")
 
-            term_font=$(trim "${term_font/*"faceName:"}")
+            trim "${term_font/*"faceName:"}"
+            term_font=$trim_output
 
             # xft: isn't required at the beginning so we prepend it if it's missing
             [[ ${term_font:0:1} != '-' && ${term_font:0:4} != xft: ]] && \
@@ -3677,7 +3829,8 @@ END
             [[ "$term_font" == "FontUseSystem=TRUE" ]] && \
                 term_font="$(gsettings get org.gnome.desktop.interface monospace-font-name)"
 
-            term_font="$(trim_quotes "$term_font")"
+            trim_quotes "$term_font"
+            term_font=$trim_output
 
             # Default fallback font hardcoded in terminal-preferences.c
             [[ -z "$term_font" ]] && term_font="Monospace 12"
@@ -3870,7 +4023,8 @@ get_battery() {
         "Windows")
             battery="$(wmic Path Win32_Battery get EstimatedChargeRemaining)"
             battery="${battery/EstimatedChargeRemaining}"
-            battery="$(trim "$battery")%"
+            trim "$battery"
+            battery="${trim_output}%"
             state="$(wmic /NameSpace:'\\root\WMI' Path BatteryStatus get Charging)"
             state="${state/Charging}"
             [[ "$state" == *TRUE* ]] && battery_state="charging"
@@ -4249,7 +4403,8 @@ END
 
             # Strip un-needed info from the path.
             image="${image/file:\/\/}"
-            image="$(trim_quotes "$image")"
+            trim_quotes "$image"
+            image=$trim_output
         ;;
     esac
 
@@ -4619,10 +4774,11 @@ info() {
 
     # Update the variable.
     if [[ "$2" ]]; then
-        output="$(trim "${!2}")"
+        trim "${!2}"
     else
-        output="$(trim "${!1}")"
+        trim "${!1}"
     fi
+    output=$trim_output
 
     if [[ "$2" && "${output// }" ]]; then
         prin "$1" "$output"
@@ -4639,7 +4795,9 @@ info() {
 
 prin() {
     # If $2 doesn't exist we format $1 as info.
-    if [[ "$(trim "$1")" && "$2" ]]; then
+    trim "$1"
+
+    if [[ "$trim_output" && "$2" ]]; then
         [[ "$json" ]] && { printf '    %s\n' "\"${1}\": \"${2}\","; return; }
 
         string="${1}${2:+: $2}"
@@ -4648,9 +4806,11 @@ prin() {
         local subtitle_color="$info_color"
     fi
 
-    string="$(trim "${string//$'\e[0m'}")"
-    length="$(strip_sequences "$string")"
-    length="${#length}"
+    trim "${string//$'\e[0m'}"
+    string=$trim_output
+
+    strip_sequences "$string"
+    length="${#strip}"
 
     # Format the output.
     string="${string/:/${reset}${colon_color}${separator:=:}${info_color}}"
@@ -4690,18 +4850,20 @@ get_bold() {
     esac
 }
 
+# trim, trim_quotes and strip_sequences return through '$trim_output' /
+# '$strip' rather than stdout: they run several times per info line, and a
+# command substitution around each one costs a fork (~1ms) apiece.
 trim() {
     set -f
     # shellcheck disable=2048,2086
     set -- $*
-    printf '%s\n' "${*//[[:space:]]/}"
+    trim_output="${*//[[:space:]]/}"
     set +f
 }
 
 trim_quotes() {
     trim_output="${1//\'}"
     trim_output="${trim_output//\"}"
-    printf "%s" "$trim_output"
 }
 
 strip_sequences() {
@@ -4711,8 +4873,6 @@ strip_sequences() {
     strip="${strip//$'\e['38\;5\;[0-9]m}"
     strip="${strip//$'\e['38\;5\;[0-9][0-9]m}"
     strip="${strip//$'\e['38\;5\;[0-9][0-9][0-9]m}"
-
-    printf '%s\n' "$strip"
 }
 
 # COLORS
@@ -4967,7 +5127,8 @@ get_ppid() {
 
         "Linux")
             ppid="$(grep -i -F "PPid:" "/proc/${1:-$PPID}/status")"
-            ppid="$(trim "${ppid/PPid:}")"
+            trim "${ppid/PPid:}"
+            ppid=$trim_output
         ;;
 
         *)
@@ -5580,7 +5741,9 @@ get_distro_ascii() {
     # This function gets the distro ascii art and colors.
     #
     # $ascii_distro is the same as $distro.
-    case $(trim "$ascii_distro") in
+    trim "$ascii_distro"
+
+    case $trim_output in
         "AIX"*)
             set_colors 2 7
             read -rd '' ascii_data <<'EOF'

@@ -33,12 +33,18 @@ sudo make install
 #### Debian and Alpine Packages:
 - Debian and Alpine packages will only be built on release
 
+### Roadmap
+#### 7.3.x Fumbling Fungus
+- a whole lot of bash rewrite
+- improved management
+
+### Release Notes
+
 #### 7.2.7 - Freaky Fox (planned for 09/2026)
 - general bug and stability fixes
 - fixed apple devices not properly showing
 - intel gpu handler fixes for more than meteorlake GPUs (intel arc)
-(- improved speed)
-(- improved management) - part of rewrite
+- improved speed
 
 #### 7.2.6h1 - Splendian
 minor release update (man will not be updated) adding Splendian _my own debian based distro_ that will get pushed publicly to the repos at some point
