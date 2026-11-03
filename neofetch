@@ -1,4 +1,3 @@
-#!/bin/bash
 #!/usr/bin/env bash
 #
 # Neofetch: A command-line system information tool written in bash 3.2+.
@@ -23,7 +22,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-version=7.2.7-rc2
+version=7.2.7
 
 # Fallback to a value of '5' for shells which support bash
 # but do not set the 'BASH_' shell variables (osh).
@@ -806,6 +805,8 @@ image_source="auto"
 #       Ubuntu-Cinnamon, Ubuntu-Budgie, Ubuntu-GNOME, Ubuntu-MATE,
 #       Ubuntu-Studio, Ubuntu, Univention, Venom, Void, VNux, LangitKetujuh, semc,
 #       Obarun, windows10, Windows7, Xubuntu, Zorin, and IRIX have ascii logos.
+# NOTE: Also: Aurora, Bazzite, blendOS, CachyOS, Chimera, KDE_Linux, Nobara,
+#       Rhino, TUXEDO, Ultramarine and Vanilla.
 # NOTE: Arch, Ubuntu, Redhat, Fedora and Dragonfly have 'old' logo variants.
 #       Use '{distro name}_old' to use the old logos.
 # NOTE: Ubuntu has flavor variants.
@@ -928,6 +929,18 @@ background_color=
 # Default: 'off'
 # Values: 'on', 'off'
 stdout="off"
+
+# Info cache
+# Remember slow lookups that rarely change (GPU names, the Wayland
+# compositor, lsb_release, the CPU model, the dpkg package count) in
+# '${XDG_CACHE_HOME:-~/.cache}/neofetch'. Each entry is dropped as soon as
+# the thing it came from changes (new boot, new compositor socket,
+# package db written, ...).
+#
+# Default: 'on'
+# Values:  'on', 'off'
+# Flag:    --info_cache
+info_cache="on"
 EOF
 )
 
@@ -1013,7 +1026,16 @@ get_distro() {
                     tiny) lsb_flags=-si ;;
                     *)    lsb_flags=-sd ;;
                 esac
-                distro=$(lsb_release "$lsb_flags")
+
+                # 'lsb_release' is a python or shell script reading the
+                # files below; skip it while none of them changed.
+                if cache_get distro_lsb "$lsb_flags" /etc/os-release /usr/lib/os-release \
+                             /etc/lsb-release /etc/debian_version; then
+                    distro=$cache_val
+                else
+                    distro=$(lsb_release "$lsb_flags")
+                    cache_put distro_lsb "$lsb_flags" "$distro"
+                fi
 
             elif [[ -f /etc/os-release || \
                     -f /usr/lib/os-release || \
@@ -1583,7 +1605,13 @@ get_packages() {
                 dpkg_status="${DPKG_ADMINDIR:-/var/lib/dpkg}/status"
 
                 if [[ -r "$dpkg_status" ]]; then
-                    num "$(awk '/^Package: /{n++} END{print n+0}' "$dpkg_status")"
+                    # dpkg rewrites the file on every change, which
+                    # invalidates the cached count.
+                    cache_get pkgs_dpkg "$dpkg_status" "$dpkg_status" || {
+                        cache_val="$(awk '/^Package: /{n++} END{print n+0}' "$dpkg_status")"
+                        cache_put pkgs_dpkg "$dpkg_status" "$cache_val"
+                    }
+                    num "$cache_val"
                 else
                     tot dpkg-query -f '.\n' -W
                 fi
@@ -1897,34 +1925,76 @@ get_de() {
     ((${KDE_SESSION_VERSION:-0} >= 4)) && de=${de/KDE/Plasma}
 
     if [[ $de_version == on && $de ]]; then
+        # Every probe below starts a program (Qt/GTK start-up for most), and
+        # the answer only changes when an upgrade replaces the DE's binary,
+        # so cache it against that binary.
         case $de in
-            Plasma*)   de_ver=$(plasmashell --version) ;;
-            MATE*)     de_ver=$(mate-session --version) ;;
-            Xfce*)     de_ver=$(xfce4-session --version) ;;
-            GNOME*)
-                # Launching the gnome-shell binary just to print its version
-                # costs ~40ms; asking the running shell over D-Bus is ~7ms.
-                de_ver=$(gdbus call --session --dest org.gnome.Shell \
-                                    --object-path /org/gnome/Shell \
-                                    --method org.freedesktop.DBus.Properties.Get \
-                                    org.gnome.Shell ShellVersion 2>/dev/null)
-
-                # '(<'\''48.7'\''>,)' -> '48.7'
-                if [[ $de_ver == *\'*\'* ]]; then
-                    de_ver=${de_ver#*\'}
-                    de_ver=${de_ver%%\'*}
-                else
-                    de_ver=$(gnome-shell --version)
-                fi
-            ;;
-            Cinnamon*) de_ver=$(cinnamon --version) ;;
-            Deepin*)   de_ver=$(awk -F'=' '/MajorVersion/ {print $2}' /etc/os-version) ;;
-            Budgie*)   de_ver=$(budgie-desktop --version) ;;
-            LXQt*)     de_ver=$(lxqt-session --version) ;;
-            Lumina*)   de_ver=$(lumina-desktop --version 2>&1) ;;
-            Trinity*)  de_ver=$(tde-config --version) ;;
-            Unity*)    de_ver=$(unity --version) ;;
+            Plasma*)   de_bin=plasmashell ;;
+            MATE*)     de_bin=mate-session ;;
+            Xfce*)     de_bin=xfce4-session ;;
+            GNOME*)    de_bin=gnome-shell ;;
+            Cinnamon*) de_bin=cinnamon ;;
+            Budgie*)   de_bin=budgie-desktop ;;
+            LXQt*)     de_bin=lxqt-session ;;
+            Lumina*)   de_bin=lumina-desktop ;;
+            Trinity*)  de_bin=tde-config ;;
+            Unity*)    de_bin=unity ;;
+            *)         de_bin= ;;
         esac
+
+        de_bin_path=
+        if [[ $de_bin ]]; then
+            if ((BASH_VERSINFO[0] >= 4)); then
+                # Bash 4+ exposes the command hash table as BASH_CMDS.
+                hash "$de_bin" 2>/dev/null && de_bin_path=${BASH_CMDS[$de_bin]}
+            fi
+
+            # Bash 3.2 has no BASH_CMDS associative array. Resolve the path
+            # with the type builtin there (and if the hash lookup missed).
+            [[ $de_bin_path ]] || de_bin_path=$(type -P "$de_bin" 2>/dev/null)
+        fi
+
+        # The display socket too: a new login recreates it, and GNOME
+        # reports the version of the shell that is running, which lags
+        # behind the binary until then.
+        de_deps=("$de_bin_path")
+        [[ $WAYLAND_DISPLAY ]] && de_deps+=("${XDG_RUNTIME_DIR}/${WAYLAND_DISPLAY}")
+        [[ $DISPLAY == *:* ]] && { de_x=${DISPLAY#*:}; de_deps+=("/tmp/.X11-unix/X${de_x%%.*}"); }
+
+        if [[ $de_bin_path ]] && cache_get de_version "$de $de_bin_path" "${de_deps[@]}"; then
+            de_ver=$cache_val
+        else
+            case $de in
+                Plasma*)   de_ver=$(plasmashell --version) ;;
+                MATE*)     de_ver=$(mate-session --version) ;;
+                Xfce*)     de_ver=$(xfce4-session --version) ;;
+                GNOME*)
+                    # Launching the gnome-shell binary just to print its version
+                    # costs ~40ms; asking the running shell over D-Bus is ~7ms.
+                    de_ver=$(gdbus call --session --dest org.gnome.Shell \
+                                        --object-path /org/gnome/Shell \
+                                        --method org.freedesktop.DBus.Properties.Get \
+                                        org.gnome.Shell ShellVersion 2>/dev/null)
+
+                    # '(<'\''48.7'\''>,)' -> '48.7'
+                    if [[ $de_ver == *\'*\'* ]]; then
+                        de_ver=${de_ver#*\'}
+                        de_ver=${de_ver%%\'*}
+                    else
+                        de_ver=$(gnome-shell --version)
+                    fi
+                ;;
+                Cinnamon*) de_ver=$(cinnamon --version) ;;
+                Deepin*)   de_ver=$(awk -F'=' '/MajorVersion/ {print $2}' /etc/os-version) ;;
+                Budgie*)   de_ver=$(budgie-desktop --version) ;;
+                LXQt*)     de_ver=$(lxqt-session --version) ;;
+                Lumina*)   de_ver=$(lumina-desktop --version 2>&1) ;;
+                Trinity*)  de_ver=$(tde-config --version) ;;
+                Unity*)    de_ver=$(unity --version) ;;
+            esac
+
+            [[ $de_bin_path ]] && cache_put de_version "$de $de_bin_path" "$de_ver"
+        fi
 
         de_ver=${de_ver/*TDE:}
         de_ver=${de_ver/tde-config*}
@@ -1958,11 +2028,16 @@ get_wm() {
     if [[ -O "${XDG_RUNTIME_DIR}/${WAYLAND_DISPLAY:-wayland-0}" ]]; then
         wl_socket="${XDG_RUNTIME_DIR}/${WAYLAND_DISPLAY:-wayland-0}"
 
+        # Even 'ss' is the slowest thing left in a run, and the answer only
+        # changes when the compositor restarts, which recreates the socket
+        # (newer than the cache entry -> miss).
+        cache_get wm_wayland "$wl_socket" "$wl_socket" && wm=$cache_val
+
         # Probes ordered cheapest-first: 'ss' answers with the listening
         # socket's process name as well as its pid in one call (~0.035s),
         # where 'fuser' (~0.17s) and 'lsof' (~0.33s) walk every fd of every
         # process and still need a 'ps' to turn the pid into a name.
-        ss_out="$(ss -lxp src "$wl_socket" 2>/dev/null)"
+        [[ -z "$wm" ]] && ss_out="$(ss -lxp src "$wl_socket" 2>/dev/null)"
 
         # 'users:(("gnome-shell",pid=3305,fd=82),...)' -> 'gnome-shell'
         [[ $ss_out == *users:*\"*\"* ]] && {
@@ -1978,6 +2053,9 @@ get_wm() {
             read -r tmp_pid _ <<< "$tmp_pid"
             wm="$(ps -p "$tmp_pid" -ho comm=)"
         fi
+
+        # Only cache what the socket owner told us, not the guess below.
+        [[ "$wm" && "$wm" != "$cache_val" ]] && cache_put wm_wayland "$wl_socket" "$wm"
 
         if [[ -z "$wm" ]]; then
             # lsof may not exist, or may need root on some systems. Similarly fuser.
@@ -2285,9 +2363,18 @@ get_cpu() {
                 ;;
 
                 *)
-                    cpu="$(awk -F '\\s*: | @' \
-                            '/model name|Hardware|Processor|^cpu model|chip type|^cpu type/ {
-                            cpu=$2; if ($1 == "Hardware") exit } END { print cpu }' "$cpu_file")"
+                    # The model can't change without a reboot.
+                    get_boot_id
+
+                    if [[ $boot_id ]] && cache_get cpu_model "$boot_id"; then
+                        cpu=$cache_val
+                    else
+                        cpu="$(awk -F '\\s*: | @' \
+                                '/model name|Hardware|Processor|^cpu model|chip type|^cpu type/ {
+                                cpu=$2; if ($1 == "Hardware") exit } END { print cpu }' "$cpu_file")"
+
+                        [[ $boot_id ]] && cache_put cpu_model "$boot_id" "$cpu"
+                    fi
                 ;;
             esac
 
@@ -2349,7 +2436,16 @@ get_cpu() {
                 *)
                     case $cpu_cores in
                         "logical" | "on")
-                            cores="$(grep -c "^processor" "$cpu_file")"
+                            # Count the online CPUs from sysfs ("0-3,6,8-11"),
+                            # same number as the 'processor' lines in cpuinfo.
+                            cores=0
+                            if read -r cpu_online < /sys/devices/system/cpu/online; then
+                                IFS=, read -ra cpu_ranges <<< "$cpu_online"
+                                for cpu_range in "${cpu_ranges[@]}"; do
+                                    ((cores += ${cpu_range#*-} - ${cpu_range%-*} + 1))
+                                done
+                            fi
+                            ((cores > 0)) || cores="$(grep -c "^processor" "$cpu_file")"
                         ;;
                         "physical")
                             cores="$(awk '/^core id/&&!a[$0]++{++i} END {print i}' "$cpu_file")"
@@ -2578,12 +2674,13 @@ get_cpu() {
 }
 
 # Enumerate display controllers from sysfs and resolve their PCI ids
-# against 'pci.ids'. Same output as the 'lspci -mm' pipeline below
-# ("<vendor> <device>", one per line) at a fraction of the cost, since
-# nothing here touches PCI config space. Returns 1 when the ids file is
-# missing or a device isn't listed in it, so the caller can fall back.
+# against 'pci.ids'. Sets 'gpu_cmd' to the same output as the 'lspci -mm'
+# pipeline below ("<vendor> <device>", one per line) at a fraction of the
+# cost, since nothing here touches PCI config space. Returns 1 when the
+# ids file is missing or a device isn't listed in it, so the caller can
+# fall back.
 get_gpu_sysfs() {
-    local ids d class vendor device subvendor subdevice devs=()
+    local ids d class vendor device subvendor subdevice devs=() names
 
     for ids in /usr/share/misc/pci.ids /usr/share/hwdata/pci.ids /usr/share/pci.ids; do
         [[ -f "$ids" ]] && break
@@ -2610,13 +2707,21 @@ get_gpu_sysfs() {
     done
     ((${#devs[@]})) || return 1
 
+    # The ids above are read fresh on every run, so a cached name can only
+    # go stale when pci.ids itself is updated, which the file check covers.
+    cache_get gpu_linux "${devs[*]} $ids" "$ids" && {
+        gpu_cmd=$cache_val
+        return 0
+    }
+
     # 'pci.ids' is sorted vendor > device > subsystem, each level indented
     # by one more tab, ids padded to 4 hex digits and separated from the
     # name by two spaces. Prefer the subsystem name when the file has one,
     # which is what 'lspci' prints too.
-    awk -v want="${devs[*]}" '
+    names="$(awk -v want="${devs[*]}" '
         BEGIN {
             n = split(want, f, " ") / 4
+            last = ""
 
             for (i = 0; i < n; i++) {
                 v[i]  = f[i*4+1]; d[i]  = f[i*4+2]
@@ -2625,6 +2730,8 @@ get_gpu_sysfs() {
                 needv[v[i]]
                 needd[v[i] " " d[i]]
                 needs[v[i] " " d[i] " " sv[i] " " sd[i]]
+
+                if ((v[i] "") > last) last = v[i] ""
             }
         }
 
@@ -2645,6 +2752,10 @@ get_gpu_sysfs() {
 
         NF {
             vend = substr($0, 1, 4)
+
+            # Vendors are sorted: once past the last one needed, stop.
+            if (vend > last) exit
+
             if (vend in needv) vendname[vend] = substr($0, 7)
         }
 
@@ -2659,7 +2770,10 @@ get_gpu_sysfs() {
                 if (!seen[vendname[v[i]] " " name]++) print vendname[v[i]] " " name
             }
         }
-    ' "$ids"
+    ' "$ids")" || return 1
+
+    gpu_cmd=$names
+    cache_put gpu_linux "${devs[*]} $ids" "$names"
 }
 
 get_gpu() {
@@ -2669,7 +2783,7 @@ get_gpu() {
             # wakes a runtime-suspended discrete GPU (~0.4s of the runtime on
             # a hybrid-graphics laptop, and battery for a card nobody asked
             # for), so try sysfs first and keep 'lspci' as the fallback.
-            gpu_cmd="$(get_gpu_sysfs)" ||
+            get_gpu_sysfs ||
             gpu_cmd="$(lspci -mm |
                        awk -F '\"|\" \"|\\(' \
                               '/"Display|"3D|"VGA/ {
@@ -2773,8 +2887,10 @@ get_gpu() {
         ;;
 
         "Mac OS X"|"macOS")
-            if [[ -f "${cache_dir}/neofetch/gpu" ]]; then
-                source "${cache_dir}/neofetch/gpu"
+            # 'system_profiler' is slow. Keyed on the OS build, so an
+            # update (or a disk moved to another Mac) re-reads it.
+            if cache_get gpu_macos "$kernel_version $kernel_machine $osx_build"; then
+                gpu=$cache_val
 
             else
                 gpu="$(system_profiler SPDisplaysDataType |\
@@ -2782,7 +2898,7 @@ get_gpu() {
                 gpu="${gpu//\/ \$}"
                 gpu="${gpu%,*}"
 
-                cache "gpu" "$gpu"
+                cache_put gpu_macos "$kernel_version $kernel_machine $osx_build" "$gpu"
             fi
         ;;
 
@@ -3313,6 +3429,42 @@ get_resolution() {
     [[ -z "${resolution/x}" ]] && resolution=
 }
 
+# gsettings_get <schema> <key>: like "$(gsettings get <schema> <key>)", into
+# 'gsettings_val'. Lists the whole schema once per run instead, so the
+# theme, icon and font lookups share one 'gsettings' start-up between them.
+gsettings_get() {
+    local var="gsettings_schema_${1//[^a-zA-Z0-9]/_}" line
+
+    [[ $gsettings_loaded == *" $1 "* ]] || {
+        # With the dconf backend every settings change rewrites the user
+        # db, and new defaults rewrite the system db or compiled schemas,
+        # so a cached listing is valid until one of those files changes.
+        # Other backends or a custom schema dir: no cache.
+        local deps=() dconf_user="${XDG_CONFIG_HOME:-${HOME}/.config}/dconf/user"
+
+        [[ ${GSETTINGS_BACKEND:-dconf} == dconf && -z $GSETTINGS_SCHEMA_DIR ]] &&
+            deps=("$dconf_user" /etc/dconf/db/*
+                  /usr/share/glib-2.0/schemas/gschemas.compiled
+                  /usr/local/share/glib-2.0/schemas/gschemas.compiled)
+
+        if ((${#deps[@]})) && cache_get "gsettings_$1" "$1" "${deps[@]}"; then
+            printf -v "$var" '%s' "$cache_val"
+        else
+            printf -v "$var" '%s' "$(gsettings list-recursively "$1" 2>/dev/null)"
+            ((${#deps[@]})) && cache_put "gsettings_$1" "$1" "${!var}"
+        fi
+
+        gsettings_loaded+=" $1 "
+    }
+
+    gsettings_val=
+    while IFS= read -r line; do
+        [[ $line == "$1 $2 "* ]] && { gsettings_val=${line#"$1 $2 "}; return 0; }
+    done <<< "${!var}"
+
+    return 1
+}
+
 get_style() {
     # Fix weird output when the function is run multiple times.
     unset gtk2_theme gtk3_theme theme path
@@ -3347,14 +3499,14 @@ get_style() {
 
             *"Cinnamon"*)
                 if type -p gsettings >/dev/null; then
-                    gtk3_theme="$(gsettings get org.cinnamon.desktop.interface "$gsettings")"
+                    gsettings_get org.cinnamon.desktop.interface "$gsettings"; gtk3_theme=$gsettings_val
                     gtk2_theme="$gtk3_theme"
                 fi
             ;;
 
             "Gnome"* | "Unity"* | "Budgie"*)
                 if type -p gsettings >/dev/null; then
-                    gtk3_theme="$(gsettings get org.gnome.desktop.interface "$gsettings")"
+                    gsettings_get org.gnome.desktop.interface "$gsettings"; gtk3_theme=$gsettings_val
                     gtk2_theme="$gtk3_theme"
 
                 elif type -p gconftool-2 >/dev/null; then
@@ -3363,7 +3515,7 @@ get_style() {
             ;;
 
             "Mate"*)
-                gtk3_theme="$(gsettings get org.mate.interface "$gsettings")"
+                gsettings_get org.mate.interface "$gsettings"; gtk3_theme=$gsettings_val
                 gtk2_theme="$gtk3_theme"
             ;;
 
@@ -3398,7 +3550,7 @@ get_style() {
                 gtk3_theme="$(grep "^[^#]*$name" "${XDG_CONFIG_HOME}/gtk-3.0/settings.ini")"
 
             elif type -p gsettings >/dev/null; then
-                gtk3_theme="$(gsettings get org.gnome.desktop.interface "$gsettings")"
+                gsettings_get org.gnome.desktop.interface "$gsettings"; gtk3_theme=$gsettings_val
 
             elif [[ -f "/etc/gtk-3.0/settings.ini" ]]; then
                 gtk3_theme="$(grep "^[^#]*$name" /etc/gtk-3.0/settings.ini)"
@@ -3502,9 +3654,9 @@ get_term() {
 
     # Check $PPID for terminal emulator.
     while [[ -z "$term" ]]; do
-        parent="$(get_ppid "$parent")"
+        get_ppid "$parent"; parent=$ppid
         [[ -z "$parent" ]] && break
-        name="$(get_process_name "$parent")"
+        get_process_name "$parent"
 
         case ${name// } in
             "${SHELL/*\/}"|*"sh"|"screen"|"su"*|"newgrp") ;;
@@ -3524,9 +3676,6 @@ get_term() {
             *"NeoVimServer"*)  term="VimR Terminal" ;;
 
             *)
-                # Fix issues with long process names on Linux.
-                [[ $os == Linux ]] && term=$(realpath "/proc/$parent/exe")
-
                 term="${name##*/}"
 
                 # Fix wrapper names in Nix.
@@ -3640,7 +3789,7 @@ END
 
         "konsole" | "yakuake")
             # Get Process ID of current konsole window / tab
-            child="$(get_ppid "$$")"
+            get_ppid "$$"; child=$ppid
 
             QT_BINDIR="$(qtpaths --binaries-dir)" && PATH+=":$QT_BINDIR"
 
@@ -3705,7 +3854,7 @@ END
                 }
 
                 if [[ "$(mate_get "$profile" "use-system-font")" == "true" ]]; then
-                    term_font="$(gsettings get org.mate.interface monospace-font-name)"
+                    gsettings_get org.mate.interface monospace-font-name; term_font=$gsettings_val
                 else
                     term_font="$(mate_get "$profile" "font")"
                 fi
@@ -3722,7 +3871,7 @@ END
             term_font="$(gsettings get org.pantheon.terminal.settings font)"
 
             [[ -z "${term_font//\'}" ]] && \
-                term_font="$(gsettings get org.gnome.desktop.interface monospace-font-name)"
+                gsettings_get org.gnome.desktop.interface monospace-font-name; term_font=$gsettings_val
 
             trim_quotes "$term_font"
             term_font=$trim_output
@@ -3827,7 +3976,7 @@ END
                          "${XDG_CONFIG_HOME}/xfce4/terminal/terminalrc")"
 
             [[ "$term_font" == "FontUseSystem=TRUE" ]] && \
-                term_font="$(gsettings get org.gnome.desktop.interface monospace-font-name)"
+                gsettings_get org.gnome.desktop.interface monospace-font-name; term_font=$gsettings_val
 
             trim_quotes "$term_font"
             term_font=$trim_output
@@ -4878,22 +5027,22 @@ strip_sequences() {
 # COLORS
 
 set_colors() {
-    c1="$(color "$1")${ascii_bold}"
-    c2="$(color "$2")${ascii_bold}"
-    c3="$(color "$3")${ascii_bold}"
-    c4="$(color "$4")${ascii_bold}"
-    c5="$(color "$5")${ascii_bold}"
-    c6="$(color "$6")${ascii_bold}"
+    color_to c1 "$1"; c1+=$ascii_bold
+    color_to c2 "$2"; c2+=$ascii_bold
+    color_to c3 "$3"; c3+=$ascii_bold
+    color_to c4 "$4"; c4+=$ascii_bold
+    color_to c5 "$5"; c5+=$ascii_bold
+    color_to c6 "$6"; c6+=$ascii_bold
 
     [[ "$color_text" != "off" ]] && set_text_colors "$@"
 }
 
 set_text_colors() {
     if [[ "${colors[0]}" == "distro" ]]; then
-        title_color="$(color "$1")"
+        color_to title_color "$1"
         at_color="$reset"
         underline_color="$reset"
-        subtitle_color="$(color "$2")"
+        color_to subtitle_color "$2"
         colon_color="$reset"
         info_color="$reset"
 
@@ -4902,37 +5051,45 @@ set_text_colors() {
         ((${2:-7} == 8)) && subtitle_color="$reset"
 
         # If the second color is white use the first for the subtitle.
-        ((${2:-7} == 7)) && subtitle_color="$(color "$1")"
+        ((${2:-7} == 7)) && color_to subtitle_color "$1"
         ((${1:-1} == 7)) && title_color="$reset"
     else
-        title_color="$(color "${colors[0]}")"
-        at_color="$(color "${colors[1]}")"
-        underline_color="$(color "${colors[2]}")"
-        subtitle_color="$(color "${colors[3]}")"
-        colon_color="$(color "${colors[4]}")"
-        info_color="$(color "${colors[5]}")"
+        color_to title_color "${colors[0]}"
+        color_to at_color "${colors[1]}"
+        color_to underline_color "${colors[2]}"
+        color_to subtitle_color "${colors[3]}"
+        color_to colon_color "${colors[4]}"
+        color_to info_color "${colors[5]}"
     fi
 
     # Bar colors.
     if [[ "$bar_color_elapsed" == "distro" ]]; then
-        bar_color_elapsed="$(color fg)"
+        color_to bar_color_elapsed fg
     else
-        bar_color_elapsed="$(color "$bar_color_elapsed")"
+        color_to bar_color_elapsed "$bar_color_elapsed"
     fi
 
     case ${bar_color_total}${1} in
-        distro[736]) bar_color_total=$(color "$1") ;;
-        distro[0-9]) bar_color_total=$(color "$2") ;;
-        *)           bar_color_total=$(color "$bar_color_total") ;;
+        distro[736]) color_to bar_color_total "$1" ;;
+        distro[0-9]) color_to bar_color_total "$2" ;;
+        *)           color_to bar_color_total "$bar_color_total" ;;
     esac
 }
 
-color() {
-    case $1 in
-        [0-6])    printf '%b\e[3%sm'   "$reset" "$1" ;;
-        7 | "fg") printf '\e[37m%b'    "$reset" ;;
-        *)        printf '\e[38;5;%bm' "$1" ;;
+# color_to <var> <color>: store the escape for <color> in <var>.
+# Same result as "$(color ...)" without paying for a subshell.
+color_to() {
+    case $2 in
+        [0-6])    printf -v "$1" '%b\e[3%sm'   "$reset" "$2" ;;
+        7 | "fg") printf -v "$1" '\e[37m%b'    "$reset" ;;
+        *)        printf -v "$1" '\e[38;5;%bm' "$2" ;;
     esac
+}
+
+# Kept for user configs, which use "$(color N)" in custom 'prin' lines.
+color() {
+    color_to color_out "$1"
+    printf '%s' "$color_out"
 }
 
 # OTHER
@@ -4945,7 +5102,8 @@ stdout() {
 }
 
 err() {
-    err+="$(color 1)[!]${reset} $1
+    color_to err_color 1
+    err+="${err_color}[!]${reset} $1
 "
 }
 
@@ -5014,23 +5172,65 @@ bar() {
     bar+="${bar_color_total}${total// /${bar_char_total}}"
 
     # Borders.
-    [[ "$bar_border" == "on" ]] && \
-        bar="$(color fg)[${bar}$(color fg)]"
+    if [[ $bar_border == on ]]; then
+        color_to bar_fg fg
+        bar="${bar_fg}[${bar}${bar_fg}]"
+    fi
 
     printf "%b" "${bar}${info_color}"
 }
 
-cache() {
-    if [[ "$2" ]]; then
-        mkdir -p "${cache_dir}/neofetch"
-        printf "%s" "${1/*-}=\"$2\"" > "${cache_dir}/neofetch/${1/*-}"
-    fi
+# The info cache. One file per entry under '$cache_dir/neofetch':
+#
+#     line 1:  the key the value was computed for
+#     rest:    the value
+#
+# Files are read as plain text and never sourced, and only files owned by
+# the current user are trusted, so a planted cache can at worst show wrong
+# info, not run code.
+
+# cache_put <name> <key> <value>
+cache_put() {
+    [[ $info_cache == on && $cache_dir && $2 && $3 ]] || return 0
+
+    [[ -d "${cache_dir}/neofetch" ]] ||
+        mkdir -p "${cache_dir}/neofetch" 2>/dev/null || return 0
+
+    printf '%s\n%s\n' "$2" "$3" > "${cache_dir}/neofetch/$1" 2>/dev/null
+    return 0
+}
+
+# cache_get <name> <key> [file]...
+# Sets 'cache_val' and returns 0 on a hit. A miss is: no entry, an entry
+# saved for another key, or any of the given files changed after the
+# entry was written.
+cache_get() {
+    local file="${cache_dir}/neofetch/$1" key dep
+
+    cache_val=
+    [[ $info_cache == on && $cache_dir && -f $file && -O $file ]] || return 1
+
+    for dep in "${@:3}"; do
+        [[ $dep -nt $file ]] && return 1
+    done
+
+    { IFS= read -r key; IFS= read -rd '' cache_val; } < "$file"
+
+    [[ $key == "$2" && $cache_val ]] || { cache_val=; return 1; }
+    cache_val=${cache_val%$'\n'}
+}
+
+# The current boot, for facts that can only change with a reboot.
+get_boot_id() {
+    [[ $boot_id ]] && return
+    [[ -r /proc/sys/kernel/random/boot_id ]] && read -r boot_id < /proc/sys/kernel/random/boot_id
 }
 
 get_cache_dir() {
+    # Per user, never a world-writable directory like /tmp.
     case $os in
-        "Mac OS X"|"macOS") cache_dir="/Library/Caches" ;;
-        *)          cache_dir="/tmp" ;;
+        "Mac OS X"|"macOS") cache_dir="${HOME:+${HOME}/Library/Caches}" ;;
+        *)                  cache_dir="${XDG_CACHE_HOME:-${HOME:+${HOME}/.cache}}" ;;
     esac
 }
 
@@ -5094,11 +5294,23 @@ dynamic_prompt() {
 cache_uname() {
     # Cache the output of uname so we don't
     # have to spawn it multiple times.
-    IFS=" " read -ra uname <<< "$(uname -srm)"
+    # Linux exposes all three fields in /proc, which saves a fork.
+    # ('kernel/arch' only exists since Linux 6.1.)
+    if [[ -r /proc/sys/kernel/ostype &&
+          -r /proc/sys/kernel/osrelease &&
+          -r /proc/sys/kernel/arch ]]; then
+        read -r kernel_name    < /proc/sys/kernel/ostype
+        read -r kernel_version < /proc/sys/kernel/osrelease
+        read -r kernel_machine < /proc/sys/kernel/arch
+    fi
 
-    kernel_name="${uname[0]}"
-    kernel_version="${uname[1]}"
-    kernel_machine="${uname[2]}"
+    if [[ -z $kernel_name || -z $kernel_version || -z $kernel_machine ]]; then
+        IFS=" " read -ra uname <<< "$(uname -srm)"
+
+        kernel_name="${uname[0]}"
+        kernel_version="${uname[1]}"
+        kernel_machine="${uname[2]}"
+    fi
 
     if [[ "$kernel_name" == "Darwin" ]]; then
         # macOS can report incorrect versions unless this is 0.
@@ -5126,17 +5338,18 @@ get_ppid() {
         ;;
 
         "Linux")
-            ppid="$(grep -i -F "PPid:" "/proc/${1:-$PPID}/status")"
-            trim "${ppid/PPid:}"
-            ppid=$trim_output
+            # Read the field in bash rather than forking grep.
+            ppid=
+            while read -r ppid_key ppid_val; do
+                [[ $ppid_key == PPid: ]] && { ppid=$ppid_val; break; }
+            done < "/proc/${1:-$PPID}/status"
         ;;
 
         *)
             ppid="$(ps -p "${1:-$PPID}" -o ppid=)"
+            trim "$ppid"; ppid=$trim_output
         ;;
     esac
-
-    printf "%s" "$ppid"
 }
 
 get_process_name() {
@@ -5149,15 +5362,14 @@ get_process_name() {
         ;;
 
         "Linux")
-            name="$(< "/proc/${1:-$PPID}/comm")"
+            name=
+            read -r name < "/proc/${1:-$PPID}/comm"
         ;;
 
         *)
             name="$(ps -p "${1:-$PPID}" -o comm=)"
         ;;
     esac
-
-    printf "%s" "$name"
 }
 
 decode_url() {
@@ -5376,6 +5588,9 @@ ASCII:
                                 Ubuntu-Studio, Ubuntu, Univention, Venom, Void, VNux, LangitKetujuh, semc,
                                 Obarun, windows10, Windows7, Xubuntu, Zorin, and IRIX have ascii logos.
 
+                                NOTE: Also: Aurora, Bazzite, blendOS, CachyOS, Chimera, KDE_Linux,
+                                Nobara, Rhino, TUXEDO, Ultramarine and Vanilla.
+
                                 NOTE: Arch, Ubuntu, Redhat, Fedora and Dragonfly have 'old' logo variants.
 
                                 NOTE: Use '{distro name}_old' to use the old logos.
@@ -5428,6 +5643,7 @@ OTHER:
     --no_config                 Don't create the user config file.
     --print_config              Print the default config file to stdout.
     --stdout                    Turn off all colors and disables any ASCII/image backend.
+    --info_cache on/off         Cache slow lookups between runs (default: on).
     --help                      Print this text and exit
     --version                   Show neofetch version
     -v                          Display error messages.
@@ -5588,7 +5804,11 @@ get_args() {
                 [[ -d "$thumbnail_dir" ]] && rm -rf "$thumbnail_dir"
                 rm -rf "/Library/Caches/neofetch/"
                 rm -rf "/tmp/neofetch/"
-                exit
+                get_cache_dir
+                if [[ $cache_dir ]]; then
+                    rm -rf -- "${cache_dir}/neofetch/"
+                fi
+                exit 0
             ;;
 
             "--ascii_colors")
@@ -5625,6 +5845,7 @@ get_args() {
             ;;
             "--no_config") no_config="on" ;;
             "--stdout") stdout="on" ;;
+            "--info_cache") info_cache="$2" ;;
             "-v") verbose="on" ;;
             "--print_config") printf '%s\n' "$config"; exit ;;
             "-vv") set -x; verbose="on" ;;
@@ -5767,6 +5988,213 @@ h//NNNNh  ossss` +h  md- .hm/ `sNNNNN:+y
       :ys:/yNNNNNNNNNNNNNNNmy/:sy:
         .+ys///osyhhhhys+///sy+.
             -/osssossossso/-
+EOF
+        ;;
+
+        "Aurora"*)
+            set_colors 4 2 6
+            read -rd '' ascii_data <<'EOF'
+${c1}                  .
+                 / \
+                /   \
+               /     \
+              /   .   \
+             /   / \   \
+            /   /   \   \
+           /   '-----'   \
+          /               \
+${c2}   ~~~~~~/~~~~~~~~~~~~~~~~~\~~~~~~
+${c3}  ~~~~~~/~~~~~~~~~~~~~~~~~~~\~~~~~~
+${c1}       /                     \
+      '                       '
+EOF
+        ;;
+
+        "Bazzite"*)
+            set_colors 5 13
+            read -rd '' ascii_data <<'EOF'
+${c1}     .-------------------------.
+    /   ${c2}.----------------.${c1}      \
+   |   ${c2}|                  '.${c1}     |
+   |   ${c2}|    .---------.    |${c1}     |
+   |   ${c2}|    |${c1}         ${c2}|    |${c1}     |
+   |   ${c2}|    '---------'   .'${c1}     |
+   |   ${c2}|                 <${c1}       |
+   |   ${c2}|    .---------.   '.${c1}     |
+   |   ${c2}|    |${c1}         ${c2}|    |${c1}     |
+   |   ${c2}|    '---------'    |${c1}     |
+   |   ${c2}|                  .'${c1}     |
+    \   ${c2}'----------------'${c1}      /
+     '-------------------------'
+EOF
+        ;;
+
+        "blendOS"*)
+            set_colors 4 5 6 3
+            read -rd '' ascii_data <<'EOF'
+${c1}             .-'''''-.
+          .'           '.
+        .'   ${c2}.-'''''-.${c1}   '.
+       /   ${c2}.'         '.${c1}   \
+      ;   ${c2}/   ${c3}.-'''-.${c2}   \ ${c1}  ;
+      |  ${c2}|   ${c3}/       \ ${c2}  |${c1}  |
+      |  ${c2}|  ${c3}|    ${c4}o${c3}    |${c2}  |${c1}  |
+      |  ${c2}|   ${c3}\       /${c2}   |${c1}  |
+      ;   ${c2}\   ${c3}'-...-'${c2}   /${c1}   ;
+       \   ${c2}'.         .'${c1}   /
+        '.   ${c2}'-.....-'${c1}   .'
+          '.           .'
+             '-.....-'
+EOF
+        ;;
+
+        "CachyOS"*)
+            set_colors 6 2
+            read -rd '' ascii_data <<'EOF'
+${c1}          .----------------------.
+         /                      /
+        /    .-----------------'   ${c2}()${c1}
+       /    /
+      /    /                  ${c2}o${c1}
+     /    /
+    |    |               ${c2}()${c1}
+     \    \
+      \    '-----------------.
+       \                      \
+        '----------------------'
+EOF
+        ;;
+
+        "Chimera"*)
+            set_colors 1 7
+            read -rd '' ascii_data <<'EOF'
+${c1}          .-----------.
+       .-'             '-.
+     .'     .-------.     '.
+    /     .'         '.     \
+   /     /    ${c2}.---.${c1}    \     \
+  |     |    ${c2}/     \ ${c1}   |     |
+  |     |   ${c2}|       |${c1}   '-----'
+  |     |    ${c2}\     /${c1}
+  |     |     ${c2}'---'${c1}    .-----.
+   \     \            /     /
+    \     '.        .'     /
+     '.     '------'     .'
+       '-.             .-'
+          '-----------'
+EOF
+        ;;
+
+        "KDE Linux"* | "KDE_Linux"*)
+            set_colors 4 7
+            read -rd '' ascii_data <<'EOF'
+${c1}        .--.   .----.   .--.
+       /    '-'      '-'    \
+      |   .------------.     |
+   .--'   |  ${c2}|      .'${c1}  |    '--.
+  /       |  ${c2}|    .'${c1}    |       \
+ |        |  ${c2}|  .'${c1}      |        |
+ |        |  ${c2}|<'${c1}        |        |
+ |        |  ${c2}|  '.${c1}      |        |
+  \       |  ${c2}|    '.${c1}    |       /
+   '--.   |  ${c2}|      '.${c1}  |    .--'
+      |   '------------'     |
+       \    .-.      .-.    /
+        '--'   '----'   '--'
+EOF
+        ;;
+
+        "Nobara"*)
+            set_colors 15 8
+            read -rd '' ascii_data <<'EOF'
+${c1}            .-''''''-.
+        .-'            '-.
+      .'                  '.
+     /    ${c2}.------------.${c1}    \
+    ;    ${c2}/              \ ${c1}   ;
+    |    ${c2}|    .----.    |${c1}    |
+    |    ${c2}|    |${c1}    ${c2}|    |${c1}    |
+    |    ${c2}|    |${c1}    ${c2}|    |${c1}    |
+    ;    ${c2}|    |${c1}    ${c2}|    |${c1}    ;
+     \   ${c2}'----'${c1}    ${c2}'----'${c1}   /
+      '.                  .'
+        '-.            .-'
+            '-......-'
+EOF
+        ;;
+
+        "Rhino"*)
+            set_colors 5 7
+            read -rd '' ascii_data <<'EOF'
+${c1}                      .
+                     /|
+          .-.       / |
+         /   '.    /  |
+    .---'      '--'   '----.
+   /                        '.
+  /   ${c2}()${c1}                      \
+ |                             |
+ |    .                        |
+  \    '.                      |
+   '.    '-.     .-----.       |
+     '-.    '.   |     |      /
+        '----'   '-----'----'
+EOF
+        ;;
+
+        "TUXEDO"*)
+            set_colors 1 7
+            read -rd '' ascii_data <<'EOF'
+${c1}  .--.                         .--.
+  |   '-.                   .-'   |
+  |      '-.     ${c2}.---.${c1}   .-'      |
+  |         '-. ${c2}/     \ ${c1}.-'       |
+  |            ${c2}|       |${c1}          |
+  |         .-' ${c2}\     /${c1} '-.       |
+  |      .-'     ${c2}'---'${c1}     '-.    |
+  |   .-'                     '-. |
+  '--'                           '-'
+EOF
+        ;;
+
+        "Ultramarine"*)
+            set_colors 4 12
+            read -rd '' ascii_data <<'EOF'
+${c1}                 .
+                / \
+               /   \
+              /     \
+             /       \
+            /    ${c2}.${c1}    \
+           /    ${c2}/ \ ${c1}   \
+          /    ${c2}/   \ ${c1}   \
+         |    ${c2}|     |${c1}    |
+         |     ${c2}'---'${c1}     |
+          \             /
+           '.         .'
+             '-------'
+EOF
+        ;;
+
+        "Vanilla"*)
+            set_colors 3 11
+            read -rd '' ascii_data <<'EOF'
+${c1}               .--.
+              /    \
+      .--.   |      |   .--.
+     /    '. |      | .'    \
+     \      '.\    /.'      /
+      '.      '.  .'      .'
+  .-----'.      ''      .'-----.
+ /         '-.  ${c2}()${c1}  .-'         \
+ \         .-'      '-.         /
+  '-----.'      ..      '.-----'
+      .'      .'  '.      '.
+     /      .'/    \'.      \
+     \    .' |      | '.    /
+      '--'   |      |   '--'
+              \    /
+               '--'
 EOF
         ;;
 
@@ -11832,6 +12260,7 @@ EOF
 main() {
     cache_uname
     get_os
+    get_cache_dir
 
     # Load default config.
     eval "$config"
@@ -11854,7 +12283,6 @@ main() {
     }
 
     image_backend
-    get_cache_dir
     old_functions
     print_info
     dynamic_prompt

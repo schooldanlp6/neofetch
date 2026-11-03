@@ -45,6 +45,8 @@ sudo make install
 - fixed apple devices not properly showing
 - intel gpu handler fixes for more than meteorlake GPUs (intel arc)
 - improved speed
+- even faster: ~2.5x quicker runs, an info cache for slow lookups (`--info_cache off` to disable, `--clean` to clear)
+- new logos: Aurora, Bazzite, blendOS, CachyOS, Chimera Linux, KDE Linux, Nobara, Rhino Linux, TUXEDO OS, Ultramarine, Vanilla OS
 
 #### 7.2.6h1 - Splendian
 minor release update (man will not be updated) adding Splendian _my own debian based distro_ that will get pushed publicly to the repos at some point
