@@ -1,25 +1,5 @@
 # TODO
 
-## 1. Licensing — restore the MIT permission notice
-
-`neofetch` is derived from `dylanaraps/neofetch`, which is MIT. The header
-currently keeps Dylan Araps' copyright line but replaces the permission grant
-with a "personal or non profit use" restriction.
-
-MIT requires that *"the above copyright notice **and this permission notice**
-shall be included in all copies or substantial portions of the Software"*, so
-the grant can't be dropped from the upstream-derived parts, and the extra
-restriction can't attach to them.
-
-Workable shape:
-
-- Restore the full MIT permission paragraph for the upstream code.
-- Keep `Copyright (c) 2024-present DanLP6 - Daniel` as a second copyright line
-  covering your additions.
-- If you want different terms for *your own* new code (the Riinux/Splendian art,
-  the Intel GPU handling, the `--version` banner), state that separately and
-  explicitly, and note that it does not apply to the MIT-licensed base.
-
 ## 2. Shebang portability — `#!/bin/bash` vs `#!/usr/bin/env bash` - DONE
 
 Line 1 was changed from `#!/usr/bin/env bash` to `#!/bin/bash`. That breaks the
@@ -190,3 +170,6 @@ Smaller items:
 
 
 ## 6. On the distros we could also detect on install of neofetch and autocopy a default.ascii
+
+
+## 7. Add new ASCII Art
