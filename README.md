@@ -57,7 +57,10 @@ Afterwards `make test` runs the fixtures in `tests/`, and `./neofetch --single` 
 
 ### Release Notes
 
-#### 7.2.7 - Freaky Fox (planned for 09/2026)
+#### 7.3.1 - Fumbling Fungus (rc1)
+- release date (tba)
+
+#### 7.2.7 - Freaky Fox (latest release)
 - general bug and stability fixes
 - fixed apple devices not properly showing
 - intel gpu handler fixes for more than meteorlake GPUs (intel arc)
