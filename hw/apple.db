@@ -1,0 +1,139 @@
+# Apple device table (iOS / iPadOS on jailbroken devices).
+#
+# identifier|model|cpu|gpu
+#
+# One row per hardware identifier (uname -m, e.g. 'iPhone17,1'), matched
+# case-insensitively. An empty field means neofetch shows nothing for it.
+iPad1,1|iPad|Apple A4 (1) @ 1GHz|PowerVR SGX535
+iPad2,1|iPad 2|Apple A5 (2) @ 1GHz|PowerVR SGX543MP2
+iPad2,2|iPad 2|Apple A5 (2) @ 1GHz|PowerVR SGX543MP2
+iPad2,3|iPad 2|Apple A5 (2) @ 1GHz|PowerVR SGX543MP2
+iPad2,4|iPad 2|Apple A5 (2) @ 1GHz|PowerVR SGX543MP2
+iPad3,1|iPad 3|Apple A5X (2) @ 1GHz|PowerVR SGX534MP4
+iPad3,2|iPad 3|Apple A5X (2) @ 1GHz|PowerVR SGX534MP4
+iPad3,3|iPad 3|Apple A5X (2) @ 1GHz|PowerVR SGX534MP4
+iPad3,4|iPad 4|Apple A6X (2) @ 1.4GHz|PowerVR SGX554MP4
+iPad3,5|iPad 4|Apple A6X (2) @ 1.4GHz|PowerVR SGX554MP4
+iPad3,6|iPad 4|Apple A6X (2) @ 1.4GHz|PowerVR SGX554MP4
+iPad6,11|iPad 5|Apple A9 (2) @ 1.85GHz|PowerVR GT7600
+iPad6,12|iPad 5|Apple A9 (2) @ 1.85GHz|PowerVR GT7600
+iPad7,5|iPad 6|Apple A10 Fusion (4) @ 2.34GHz|PowerVR GT7600 Plus
+iPad7,6|iPad 6|Apple A10 Fusion (4) @ 2.34GHz|PowerVR GT7600 Plus
+iPad7,11|iPad 7|Apple A10 Fusion (4) @ 2.34GHz|
+iPad7,12|iPad 7|Apple A10 Fusion (4) @ 2.34GHz|
+iPad11,6|iPad 8|Apple A12 Bionic (6) @ 2.49GHz|Apple Designed GPU (A12)
+iPad11,7|iPad 8|Apple A12 Bionic (6) @ 2.49GHz|Apple Designed GPU (A12)
+iPad4,1|iPad Air|Apple A7 (2) @ 1.4GHz|PowerVR G6430
+iPad4,2|iPad Air|Apple A7 (2) @ 1.4GHz|PowerVR G6430
+iPad4,3|iPad Air|Apple A7 (2) @ 1.4GHz|PowerVR G6430
+iPad5,3|iPad Air 2|Apple A8X (3) @ 1.5GHz|PowerVR GXA6850
+iPad5,4|iPad Air 2|Apple A8X (3) @ 1.5GHz|PowerVR GXA6850
+iPad11,3|iPad Air 3|Apple A12 Bionic (6) @ 2.49GHz|
+iPad11,4|iPad Air 3|Apple A12 Bionic (6) @ 2.49GHz|
+iPad13,1|iPad Air 4|Apple A14 Bionic (6) @ 3.00Ghz|Apple Designed GPU (A14)
+iPad13,2|iPad Air 4|Apple A14 Bionic (6) @ 3.00Ghz|Apple Designed GPU (A14)
+iPad6,7|iPad Pro (12.9 Inch)|Apple A9X (2) @ 2.26GHz|PowerVR 7XT
+iPad6,8|iPad Pro (12.9 Inch)|Apple A9X (2) @ 2.26GHz|PowerVR 7XT
+iPad6,3|iPad Pro (9.7 Inch)|Apple A9X (2) @ 2.16GHz|PowerVR 7XT
+iPad6,4|iPad Pro (9.7 Inch)|Apple A9X (2) @ 2.16GHz|PowerVR 7XT
+iPad7,1|iPad Pro 2 (12.9 Inch)|Apple A10X Fusion (6) @ 2.39GHz|
+iPad7,2|iPad Pro 2 (12.9 Inch)|Apple A10X Fusion (6) @ 2.39GHz|
+iPad7,3|iPad Pro (10.5 Inch)|Apple A10X Fusion (6) @ 2.39GHz|
+iPad7,4|iPad Pro (10.5 Inch)|Apple A10X Fusion (6) @ 2.39GHz|
+iPad8,1|iPad Pro (11 Inch)|Apple A12X Bionic (8) @ 2.49GHz|
+iPad8,2|iPad Pro (11 Inch)|Apple A12X Bionic (8) @ 2.49GHz|
+iPad8,3|iPad Pro (11 Inch)|Apple A12X Bionic (8) @ 2.49GHz|
+iPad8,4|iPad Pro (11 Inch)|Apple A12X Bionic (8) @ 2.49GHz|
+iPad8,5|iPad Pro 3 (12.9 Inch)|Apple A12X Bionic (8) @ 2.49GHz|
+iPad8,6|iPad Pro 3 (12.9 Inch)|Apple A12X Bionic (8) @ 2.49GHz|
+iPad8,7|iPad Pro 3 (12.9 Inch)|Apple A12X Bionic (8) @ 2.49GHz|
+iPad8,8|iPad Pro 3 (12.9 Inch)|Apple A12X Bionic (8) @ 2.49GHz|
+iPad8,9|iPad Pro 4 (11 Inch)|Apple A12Z Bionic (8) @ 2.49GHz|
+iPad8,10|iPad Pro 4 (11 Inch)|Apple A12Z Bionic (8) @ 2.49GHz|
+iPad8,11|iPad Pro 4 (12.9 Inch)|Apple A12Z Bionic (8) @ 2.49GHz|
+iPad8,12|iPad Pro 4 (12.9 Inch)|Apple A12Z Bionic (8) @ 2.49GHz|
+iPad2,5|iPad mini|Apple A5 (2) @ 1GHz|PowerVR SGX543MP2
+iPad2,6|iPad mini|Apple A5 (2) @ 1GHz|PowerVR SGX543MP2
+iPad2,7|iPad mini|Apple A5 (2) @ 1GHz|PowerVR SGX543MP2
+iPad4,4|iPad mini 2|Apple A7 (2) @ 1.4GHz|PowerVR G6430
+iPad4,5|iPad mini 2|Apple A7 (2) @ 1.4GHz|PowerVR G6430
+iPad4,6|iPad mini 2|Apple A7 (2) @ 1.4GHz|PowerVR G6430
+iPad4,7|iPad mini 3|Apple A7 (2) @ 1.4GHz|PowerVR G6430
+iPad4,8|iPad mini 3|Apple A7 (2) @ 1.4GHz|PowerVR G6430
+iPad4,9|iPad mini 3|Apple A7 (2) @ 1.4GHz|PowerVR G6430
+iPad5,1|iPad mini 4|Apple A8 (2) @ 1.5GHz|PowerVR GX6450
+iPad5,2|iPad mini 4|Apple A8 (2) @ 1.5GHz|PowerVR GX6450
+iPad11,1|iPad mini 5|Apple A12 Bionic (6) @ 2.49GHz|
+iPad11,2|iPad mini 5|Apple A12 Bionic (6) @ 2.49GHz|
+iPad14,1|iPad mini 6||Apple Designed GPU (A15)
+iPad14,2|iPad mini 6||Apple Designed GPU (A15)
+iPad16,1|iPad mini (A17 Pro)||Apple Designed GPU (A17 Pro)
+iPad16,2|iPad mini (A17 Pro)||Apple Designed GPU (A17 Pro)
+iPhone1,1|iPhone|Samsung S5L8900 (1) @ 412MHz|PowerVR MBX Lite 3D
+iPhone1,2|iPhone 3G|Samsung S5L8900 (1) @ 412MHz|PowerVR MBX Lite 3D
+iPhone2,1|iPhone 3GS|Samsung S5PC100 (1) @ 600MHz|PowerVR SGX535
+iPhone3,1|iPhone 4|Apple A4 (1) @ 800MHz|PowerVR SGX535
+iPhone3,2|iPhone 4|Apple A4 (1) @ 800MHz|PowerVR SGX535
+iPhone3,3|iPhone 4|Apple A4 (1) @ 800MHz|PowerVR SGX535
+iPhone4,1|iPhone 4S|Apple A5 (2) @ 800MHz|PowerVR SGX543MP2
+iPhone5,1|iPhone 5|Apple A6 (2) @ 1.3GHz|PowerVR SGX543MP3
+iPhone5,2|iPhone 5|Apple A6 (2) @ 1.3GHz|PowerVR SGX543MP3
+iPhone5,3|iPhone 5c|Apple A6 (2) @ 1.3GHz|PowerVR SGX543MP3
+iPhone5,4|iPhone 5c|Apple A6 (2) @ 1.3GHz|PowerVR SGX543MP3
+iPhone6,1|iPhone 5s|Apple A7 (2) @ 1.3GHz|PowerVR G6430
+iPhone6,2|iPhone 5s|Apple A7 (2) @ 1.3GHz|PowerVR G6430
+iPhone7,2|iPhone 6|Apple A8 (2) @ 1.4GHz|PowerVR GX6450
+iPhone7,1|iPhone 6 Plus|Apple A8 (2) @ 1.4GHz|PowerVR GX6450
+iPhone8,1|iPhone 6s|Apple A9 (2) @ 1.85GHz|PowerVR GT7600
+iPhone8,2|iPhone 6s Plus|Apple A9 (2) @ 1.85GHz|PowerVR GT7600
+iPhone8,4|iPhone SE|Apple A9 (2) @ 1.85GHz|PowerVR GT7600
+iPhone9,1|iPhone 7|Apple A10 Fusion (4) @ 2.34GHz|PowerVR GT7600 Plus
+iPhone9,3|iPhone 7|Apple A10 Fusion (4) @ 2.34GHz|PowerVR GT7600 Plus
+iPhone9,2|iPhone 7 Plus|Apple A10 Fusion (4) @ 2.34GHz|PowerVR GT7600 Plus
+iPhone9,4|iPhone 7 Plus|Apple A10 Fusion (4) @ 2.34GHz|PowerVR GT7600 Plus
+iPhone10,1|iPhone 8|Apple A11 Bionic (6) @ 2.39GHz|Apple Designed GPU (A11)
+iPhone10,4|iPhone 8|Apple A11 Bionic (6) @ 2.39GHz|Apple Designed GPU (A11)
+iPhone10,2|iPhone 8 Plus|Apple A11 Bionic (6) @ 2.39GHz|Apple Designed GPU (A11)
+iPhone10,5|iPhone 8 Plus|Apple A11 Bionic (6) @ 2.39GHz|Apple Designed GPU (A11)
+iPhone10,3|iPhone X|Apple A11 Bionic (6) @ 2.39GHz|Apple Designed GPU (A11)
+iPhone10,6|iPhone X|Apple A11 Bionic (6) @ 2.39GHz|Apple Designed GPU (A11)
+iPhone11,2|iPhone XS|Apple A12 Bionic (6) @ 2.49GHz|Apple Designed GPU (A12)
+iPhone11,4|iPhone XS Max|Apple A12 Bionic (6) @ 2.49GHz|Apple Designed GPU (A12)
+iPhone11,6|iPhone XS Max|Apple A12 Bionic (6) @ 2.49GHz|Apple Designed GPU (A12)
+iPhone11,8|iPhone XR|Apple A12 Bionic (6) @ 2.49GHz|Apple Designed GPU (A12)
+iPhone12,1|iPhone 11|Apple A13 Bionic (6) @ 2.65GHz|Apple Designed GPU (A13)
+iPhone12,3|iPhone 11 Pro|Apple A13 Bionic (6) @ 2.65GHz|Apple Designed GPU (A13)
+iPhone12,5|iPhone 11 Pro Max|Apple A13 Bionic (6) @ 2.65GHz|Apple Designed GPU (A13)
+iPhone12,8|iPhone SE 2020|Apple A13 Bionic (6) @ 2.65GHz|Apple Designed GPU (A13)
+iPhone13,1|iPhone 12 Mini|Apple A14 Bionic (6) @ 3.00Ghz|Apple Designed GPU (A14)
+iPhone13,2|iPhone 12|Apple A14 Bionic (6) @ 3.00Ghz|Apple Designed GPU (A14)
+iPhone13,3|iPhone 12 Pro|Apple A14 Bionic (6) @ 3.00Ghz|Apple Designed GPU (A14)
+iPhone13,4|iPhone 12 Pro Max|Apple A14 Bionic (6) @ 3.00Ghz|Apple Designed GPU (A14)
+iPhone14,4|iPhone 13 Mini||Apple Designed GPU (A15)
+iPhone14,5|iPhone 13||Apple Designed GPU (A15)
+iPhone14,2|iPhone 13 Pro||Apple Designed GPU (A15)
+iPhone14,3|iPhone 13 Pro Max||Apple Designed GPU (A15)
+iPhone14,6|iPhone SE 2022||Apple Designed GPU (A15)
+iPhone14,7|iPhone 14||Apple Designed GPU (A15)
+iPhone14,8|iPhone 14 Plus||Apple Designed GPU (A15)
+iPhone15,2|iPhone 14 Pro||Apple Designed GPU (A16)
+iPhone15,3|iPhone 14 Pro Max||Apple Designed GPU (A16)
+iPhone15,4|iPhone 15||Apple Designed GPU (A16)
+iPhone15,5|iPhone 15 Plus||Apple Designed GPU (A16)
+iPhone16,1|iPhone 15 Pro||Apple Designed GPU (A17 Pro)
+iPhone16,2|iPhone 15 Pro Max||Apple Designed GPU (A17 Pro)
+iPhone17,3|iPhone 16||Apple Designed GPU (A18)
+iPhone17,4|iPhone 16 Plus||Apple Designed GPU (A18)
+iPhone17,1|iPhone 16 Pro||Apple Designed GPU (A18)
+iPhone17,2|iPhone 16 Pro Max||Apple Designed GPU (A18)
+iPhone17,5|iPhone 16e||Apple Designed GPU (A18)
+iPod1,1|iPod touch|Samsung S5L8900 (1) @ 412MHz|PowerVR MBX Lite
+iPod2,1|iPod touch 2G|Samsung S5L8720 (1) @ 533MHz|PowerVR MBX Lite
+iPod3,1|iPod touch 3G|Samsung S5L8922 (1) @ 600MHz|PowerVR SGX535
+iPod4,1|iPod touch 4G|Apple A4 (1) @ 800MHz|PowerVR SGX535
+iPod5,1|iPod touch 5G|Apple A5 (2) @ 800MHz|PowerVR SGX543MP2
+iPod7,1|iPod touch 6G|Apple A8 (2) @ 1.1GHz|PowerVR GX6450
+iPod9,1|iPod touch 7G||
+iPhone8,3||Apple A9 (2) @ 1.85GHz|PowerVR GT7600
+iPad6,5|||PowerVR 7XT
+iPad6,6|||PowerVR 7XT

@@ -1,0 +1,38 @@
+# CPU name rules: the noise removed from the CPU name on every OS.
+#
+# match|action|pattern|text
+#
+# Same format as hw/gpu.db (see there for the actions). 'match' is '*' for
+# rules that apply to every CPU.
+#
+# './neofetch-edit try cpu "<name>"' shows what a name turns into.
+
+*|del|(TM)|
+*|del|(tm)|
+*|del|(R)|
+*|del|(r)|
+*|del|CPU|
+*|del|Processor|
+*|del|Dual-Core|
+*|del|Quad-Core|
+*|del|Six-Core|
+*|del|Eight-Core|
+*|del|[1-9][0-9]-Core|
+*|del|[0-9]-Core|
+*|del|, * Compute Cores|
+
+# Intel: 'Core i7-6500U' is shown as 'i7-6500U', but the newer names
+# ('Core Ultra 7 155H', 'Core 7 150U') make no sense without 'Core'.
+*Intel*|del|[0-9][0-9]th Gen |
+*Intel*|keep|Core Ultra |
+*Intel*|keep|Core [3579] |
+*|del|Core |
+
+*|del|("AuthenticAMD"*)|
+*|del|with Radeon*|
+*|del|w/ Radeon*|
+*|del|, altivec supported|
+*|del|FPU*|
+*|del|Chip Revision*|
+*|del|Technologies, Inc|
+*|sub|Core2|Core 2

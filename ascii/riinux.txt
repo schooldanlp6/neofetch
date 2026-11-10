@@ -1,0 +1,6 @@
+${c1}
+Riinux
+-> Real + Linux
+This is a distro by DanLP6
+To show what LFS can do
+

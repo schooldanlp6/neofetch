@@ -30,6 +30,21 @@ git clone https://github.com/schooldanlp6/neofetch
 cd neofetch
 sudo make install
 ```
+`make install` puts neofetch, `ascii/` and `hw/` in `/opt/neofetch` and links `/usr/bin/neofetch` to it. `make install-single` installs one self-contained script instead. You can also run `./neofetch` straight from the clone.
+
+#### Editing the data files
+The logos and hardware tables are plain text in `ascii/` and `hw/`. `./neofetch-edit` changes them safely (every change is checked before it is saved):
+```
+./neofetch-edit list                         # the databases: apple, gpu, cpu, logos
+./neofetch-edit show apple iphone17          # find rows
+./neofetch-edit add apple                    # asks for each value
+./neofetch-edit set apple iPhone17,1 cpu "Apple A18 Pro (6) @ 4.04GHz"
+./neofetch-edit try gpu "Intel Corporation DG2 [Arc A770]"
+./neofetch-edit edit cpu                     # $EDITOR, then a check
+./neofetch-edit cli                          # interactive menu
+./neofetch-edit check                        # check everything
+```
+Afterwards `make test` runs the fixtures in `tests/`, and `./neofetch --single` (or `make deb`) builds the single-file script with your changes built in.
 #### Debian and Alpine Packages:
 - Debian and Alpine packages will only be built on release
 
@@ -37,6 +52,8 @@ sudo make install
 #### 7.3.x Fumbling Fungus
 - a whole lot of bash rewrite
 - improved management
+- added neofetch-edit a simple editing script for neofetchs new db structure
+- 2 versions from now on: neofetch-s (the original) and neofetch (the split binary), you cannot install both at the same time!
 
 ### Release Notes
 
@@ -47,6 +64,14 @@ sudo make install
 - improved speed
 - even faster: ~2.5x quicker runs, an info cache for slow lookups (`--info_cache off` to disable, `--clean` to clear)
 - new logos: Aurora, Bazzite, blendOS, CachyOS, Chimera Linux, KDE Linux, Nobara, Rhino Linux, TUXEDO OS, Ultramarine, Vanilla OS
+- logos and Apple device data moved out of the script into `ascii/` and `hw/` (installed to `/opt/neofetch`); `neofetch --single` builds a self-contained script
+- `make deb` builds two packages: `neofetch` (single file) and `neofetch-opt` (`/opt/neofetch` layout)
+- logos are also matched on `/etc/os-release` (`ID`, `ID_LIKE`, `VARIANT_ID`), so derivatives get their parent's logo instead of Tux
+- `neofetch --update_ascii` downloads new logos without a new release (checksummed, only when you run it)
+- more logos: AerynOS, Bluefin, Fedora Atomic (Silverblue, Kinoite, ...), Omarchy, openKylin, PikaOS
+- GPU and CPU name clean-up moved into `hw/gpu.db` and `hw/cpu.db`; `./neofetch-edit` edits and checks the data files, `make test` runs the new fixtures
+- Intel Arc cards are no longer hidden next to Intel integrated graphics, and count as dedicated for `--gpu_type`
+- CPU names: `Core Ultra 7 155H` and `Core 7 150U` keep `Core`; `13th Gen` and `w/ Radeon ...` are dropped
 
 #### 7.2.6h1 - Splendian
 minor release update (man will not be updated) adding Splendian _my own debian based distro_ that will get pushed publicly to the repos at some point

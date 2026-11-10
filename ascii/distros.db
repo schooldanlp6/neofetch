@@ -1,0 +1,305 @@
+# neofetch logo database.
+#
+# kind|ids|patterns|colors|file|sha256
+#
+# kind      distro: matched against the distro name (or --ascii_distro)
+#           kernel: matched against the kernel name, when nothing else matched
+# ids       os-release ID values ('ID:VARIANT_ID' for variants), space separated
+# patterns  shell globs, comma separated, matched case-insensitively. First
+#           matching row wins, so specific rows go above broader ones.
+# colors    arguments for set_colors (c1 is also the title color)
+# file      art file in this directory
+# sha256    checksum of the art file (neofetch --rehash_ascii updates it)
+#
+# Lookup: ID:VARIANT_ID, then patterns, then ID, then each ID_LIKE, then kernel.
+distro||AIX*|2 7|aix.txt|8fb6d3ec7196b1941f5885ca5883397592cf5d6c53a974fdcbdc7f3d39c6a52b
+distro|fedora:silverblue fedora:kinoite fedora:sericea fedora:onyx fedora:cosmic-atomic fedora:budgie-atomic|Fedora Atomic*,Silverblue*,Kinoite*,Sericea*,Onyx*|4 12|fedora-atomic.txt|39a8ba2d413725e61e83c72c4f24ce5d23f10ae2380356c85023fce7c4e7601f
+distro|aerynos|AerynOS*|5 4|aerynos.txt|355091656176d219d2d55a3b4b220656cc4af56d45d815cb91923afeffff9c05
+distro|bluefin|Bluefin*|4 7|bluefin.txt|37b2b6799f1720dd77f773208812791e8f81cacffac6ebff62f07baf02ecab28
+distro|omarchy|Omarchy*|2 7|omarchy.txt|6db7bcad8c3f5e4d25c2c728efe01717082a7214c047788201828b1fa18971cf
+distro|openkylin|openKylin*|2 4|openkylin.txt|7da3ffda45e1614229649412a3b6b9babb960a91f559edc18d1fa2c90ddedb17
+distro|pika|Pika OS*,PikaOS*|3 7|pikaos.txt|2b5f5f46e4f9210618df42bb49cbb8e771f0995edd60cba75553abedfc2dc450
+distro|aurora|Aurora*|4 2 6|aurora.txt|60c1db2ca9227c5edeb29bd839267ae8de34c7cdaf14e77593f7c9d2541a1075
+distro|bazzite|Bazzite*|5 13|bazzite.txt|9292085d9e30106c2134bcd5265d7188b2762373a35707c30532712fd99c01eb
+distro|blendos|blendOS*|4 5 6 3|blendos.txt|bf85d247f389a84c6978d2a02647c106709839302c66cd6dccdb9c3ee89650ce
+distro|cachyos|CachyOS*|6 2|cachyos.txt|9c2183cf683a6c8fd8e250c0fdd1dcbc143d0a16d7a0355b910eb4495482e06c
+distro|chimera|Chimera*|1 7|chimera.txt|13a40cee63bbeabfa98ae340e52c4048472b5d26a9fa66c24526fd6fbf5a9204
+distro|kde-linux|KDE Linux*,KDE_Linux*|4 7|kde-linux.txt|7a44dca511fe1bd67e863d6dc3afa7db20f13a5432d01c2a8f5733c4fc9a0b25
+distro|nobara|Nobara*|15 8|nobara.txt|8e34d94b32164d1262d931f6e64963c2096ef22f09f7da9af3ce71f7ce4190d3
+distro|rhino|Rhino*|5 7|rhino.txt|d5190968ce9a787fd8515fd2745804069668462a6cb7b29fe18bd1a9838cd7a0
+distro|tuxedo|TUXEDO*|1 7|tuxedo.txt|bd9655bb4d457318c480dc39744f9fc9fe9686b8184e098edeb9d2cfe2bf2ec6
+distro|ultramarine|Ultramarine*|4 12|ultramarine.txt|fb09a2903f0f0fb8fe2193a2c57103eae00b4aa8b56ec2471ebe016aa45b27de
+distro|vanilla|Vanilla*|3 11|vanilla.txt|9fce4647c0e222f21db52b3140d49e7c50098b6232e348463f1d1972964058d1
+distro||Aperio GNU/Linux*|255|aperio-gnu-linux.txt|90531c1cae20f1d820903f42142528bd296424727987b1ee059107b29bb1f38c
+distro||Hash*|123|hash.txt|7e4ffe0e1edf49995b81e08b94b6e3546a400c89817862353343972fbf8bd175
+distro|almalinux|AlmaLinux*|1 3 4 2 6|almalinux.txt|6df44f08317b0f3441f09e50078f60624578e4e265b5aff69388ac7095428daa
+distro||alpine_small|4 7|alpine-small.txt|bd6493f3430ae32fcfa26aa93ecaeea8df3178e38fd1cdba3a672e4b77ea74f6
+distro|alpine|Alpine*|4 5 7 6|alpine.txt|d879b35112d50ad61d0ff460828f3229cd78fa566067d3dda0e9fe1e604afeff
+distro||Alter*|6 6|alter.txt|735af3d6572402702e21ed92ab8bf01a2cc17f83d9abb547c98001a24f478dba
+distro|amzn|Amazon*|3 7|amazon.txt|3d248a7a2707a257b08abaa4d58e60e07d1d9945d31b9c48712ac9fe4d9ad622
+distro||Anarchy*|7 4|anarchy.txt|1a3fbe9c24b937f4a8bff1b9f4aad0b512c75848f9f6159f9b3b3565ef570902
+distro||android_small*|2 7|android-small.txt|22f34574c33ecd68e5bf4510ea7e52a93d4d0ae1dc1e1e2390565b1c34ded917
+distro||Android*|2 7|android.txt|f8c2c3777945b77dfb38d4da41cddafcba83888a4a6978ac3fa42936cb56ed66
+distro||instantOS*|4 6|instantos.txt|201ddfb73cc0fdfc566e22850f5eec7f15f11ab07615fb547d63e4f1ba262fc6
+distro||Antergos*|4 6|antergos.txt|e21ecbf03a0bcaf3b3b6515a44233410dedea186e9957bf8e5fad6b4578f5f68
+distro||antiX*|1 7 3|antix.txt|92f02d8a42ef57a7398df3fb5cc38b951171717411d37d5a17ac3707d1734caf
+distro||AOSC OS/Retro*|4 7 1 3|aosc-os-retro.txt|e67f5d986aea4d62975f463048a1a02d4c498ce65f5e32cdd077fa467198b85f
+distro||AOSC OS*|4 7 1|aosc-os.txt|1dee7b693ec10a54157d73251a933e5af40b0d5ac640499cf8ce004880d4b941
+distro||Apricity*|4 7 1|apricity.txt|4a012ae970cab2d1baa9a075087b0a7dfdb9bcd27a1488d345f081835fa5aa89
+distro||Archcraft*|6 6 7 1|archcraft.txt|2c683123e5599f145d254e212a225d7e3fb273632a8d34af7f5a7c0895f0d36e
+distro||arcolinux_small*|7 4|arcolinux-small.txt|015b4b1f196b0c9ede7fb741c585dc1b1fea91a30ad1601839135cbd0b4cc453
+distro|arcolinux|ArcoLinux*|7 4|arcolinux.txt|51d6faaaed97c7282f1a574f532bf43ed84dca42b1243b671a29569ee2e1ddb7
+distro||arch_small|6 7 1|arch-small.txt|69efaa65e2d213db00521ffe9e01cae353456b0850384717e37a539718890919
+distro||arch_old|6 7 1|arch-old.txt|1072ed774931876ca8f394f6978073ac4557d2730fc3572a9ace0f0df181adaf
+distro||ArchBox*|2 7 1|archbox.txt|86cbf3f45733e15f5a0665747775dced879c844ef830c297e8b2568d3b41f1b1
+distro||ARCHlabs*|6 6 7 1|archlabs.txt|ec7533e73e81c14d890c3f5380bd48ded6da900216355b634a6f2cbfdff2074a
+distro||ArchStrike*|8 6|archstrike.txt|25a3257fb050f0b3e0e88a5f917a29b737c6ddf2a7b3ce3daa83a41f462d2aa0
+distro||*XFerience*|6 6 7 1|xferience.txt|c50ed4ae68a99e35bcb7f46dfc4ce8897936cb78337348a2e3884e8213454907
+distro||ArchMerge*|6 6 7 1|archmerge.txt|d301ac4c9dae31eb143802d3a0d8016562388b4795ee33de4382af22fdc128ae
+distro|arch|Arch*|6 6 7 1|arch.txt|71e793c5ee9237751068ed48d80c1391b36e2c12132062ca2bc9ba93737db6bf
+distro||artix_small*|6 6 7 1|artix-small.txt|8b70764dcd8faa46f1131d51786d9127d50565bdb233311fd840467ecf736a74
+distro|artix|Artix*|6 6 7 1|artix.txt|612851c525a3d2d93f3b96be0d32672c20c5b231f082ecd939d0083a3400bf4b
+distro||Arya*|2 1|arya.txt|213e3a6af170b70f4c53c8882533cf2cdf64230e109b2b8de39cd064491191a8
+distro||AsteroidOS*|160 208 202 214|asteroidos.txt|ce6a3aa2c8b4269283c679e882dc77e2f780602c7a8675f50e729b406a58bae4
+distro||Bedrock*|8 7|bedrock.txt|127e8fcb3734032ae3f1ff02f577e638d696605f89c09f297294cdd110b80a80
+distro||Bitrig*|2 7|bitrig.txt|27c99493822b32fa754ae4f989ce79dd8fdd86406f51704221a282b686d50d22
+distro||BlackArch*|1 1 0 1|blackarch.txt|eda69f65d070c439f7e8d3bec5bff7715feb747daa07d395b9ab361ba960de26
+distro||BLAG*|5 7|blag.txt|3b6874a1da8deb05f4ae3ceba6f9279b670685ea58789aa1662194e6a0761cae
+distro||BlankOn*|1 7 3|blankon.txt|0d2aa43bea84d27a795052197a3a596fdc1fa166d3cde1639490b2120552f83d
+distro||BlueLight*|7 4|bluelight.txt|9792d20915f23b59d07698d5c287d73e68c181b4f49dcd1e98563f04e9b37940
+distro||Bodhi*|7 11 2|bodhi.txt|ef378d6445dfe84585a31aab962badf83f81fe714ce4451374dde929c7319ea7
+distro||bonsai*|6 2 3|bonsai.txt|edd73771e80047fa41cc0fc335f086cab6b0431a4fdc7e414d0bc2c0a2599ce8
+distro||BSD|1 7 4 3 6|bsd.txt|9b25c1e416d46693e319170b27f3c3f99fc2540ff187337999e716530ea9b3f3
+distro||BunsenLabs*|fg 7|bunsenlabs.txt|ecdadd314db3ef6f50c948a9e38994d3a2b9903bb3b77fc21accaaa19f8c8320
+distro||Calculate*|7 3|calculate.txt|21a7fd942149f70be5ae275eb37f9a11c7d943105b723bc8b31b352aacb213bf
+distro||Carbs*|4 5 4 4 4 4|carbs.txt|3e76c96dbbaa958081445613702d17d7cf2d8de949b520c43e5624b35a5ad62c
+distro||CBL-Mariner*|6|cbl-mariner.txt|780bcc9df4ca680a3c4030f5ef4804362bba18fee717f2db863f8fa6f841ae65
+distro||CelOS*|4 6 0 5|celos.txt|7513d85f462cba4bcf7a6b68ab751317d2c9282b33eaf15f437908a50195a720
+distro||centos_small*|3 2 4 5 7|centos-small.txt|b57b4b1136de77ff7ba6980238e3b7807b12ef31baaef8433ae5c90f8403c82b
+distro|centos|CentOS*|3 2 4 5 7|centos.txt|7b7664891aeb0ab5589f1542a6f2826bd19eeca57e0586a72f97121f350b8123
+distro||Chakra*|4 5 7 6|chakra.txt|45660f724dcd4cb5ab7431092d2e84ce067f9dcf21569a8ada5ad421ef865458
+distro||ChaletOS*|4 7 1|chaletos.txt|0f0bbe0926f58f0e294a6f6c7f8ecc8edaaf59f5eff684e0d507ce8dd9429b4d
+distro||Chapeau*|2 7|chapeau.txt|7c73a2d34f7c7bd9bd280fbd0699cb22221659883247b33d1a85262fdd28895c
+distro||Chrom*|2 1 3 4 7|chrom.txt|702b0d3ed95c4f9f4c653abe4b5496bdf626ae5b23e832a3c4473e2861fdf778
+distro||cleanjaro_small*|7 7|cleanjaro-small.txt|ec9bf13e0ba43f5fdb1c815214e5eba4e715bc02730b74adb49f35493ab18681
+distro||Cleanjaro*|7 7|cleanjaro.txt|b51b0c6f7209f6f923b31b65ba338792277c43a0f5a30b1980227ad98797846c
+distro||ClearOS*|2|clearos.txt|1373dee861f7e7e923b677677373667fcbee9aad6d459fdb84600af474509ce9
+distro|clear-linux-os|Clear Linux OS*,Clear_Linux*|4 3 7 6|clear-linux-os.txt|69becc5f13d8c6c08f4fece388894d5c25219916c2e153858293e319e7e84bc3
+distro||Clover*|2 6|clover.txt|cda1f1dc8627792b99a61d438e49d89fce8999cad6a840fba13245de1006cedf
+distro||Condres*|2 3 6|condres.txt|769536953f3b5f7951e4439d2745e47b05ae63e196052e9b02d93ec3b97add10
+distro||Container Linux by CoreOS*,Container_Linux*|4 7 1|container-linux-by-coreos.txt|bc6b238098c0150d0c8da362a85c449e491aa42911ffe495ff7ff77e00a34e23
+distro||crux_small,KISS*|4 5 7 6|crux-small.txt|1b0d58e2d155e1afeeac7ea604f7ac8de8c8c359dc0989183187499211c50655
+distro||CRUX*|4 5 7 6|crux.txt|e8610236c11f7ecbc9b1d2237a48f73d0f920c65c2e9070dd7eff62d8aa2ed99
+distro||*Crystal Linux*|13 5|crystal-linux.txt|f1fd3dbc715d0627d861599d858808bbadee9a34c9532be484ae5312c9f78c75
+distro||*Cucumber*|2 3|cucumber.txt|42e2b397976ecbd991dd8dabcf3f3fed950224195ba08bb38984cb924f04a3ff
+distro||CyberOS*|50 32 57|cyberos.txt|4c8f8415927c4553e5d56a6679091908b914d6fcdc16c88bf33e5ce7e0c17c97
+distro||dahlia*|1 7 3|dahlia.txt|341f71e650836071e3274ab814132bb3b33de2c0791b78ef19f8909a91af1356
+distro||cutefish*|1 7 3|cutefish.txt|e31389a94793587a38c75c1668959704fdd8e19abd8af36457b871af8b822c23
+distro||debian_small|1 7 3|debian-small.txt|6f0d257ec7a0b6a2c0ec0815ceccceab2c60fef14c5e626c4fa9a91d76ac788d
+distro|debian|Debian*|1 7 3|debian.txt|ab84e90229eb6c18319fe9dff74bf76e1397917973af25333510c94ced1e6408
+distro|deepin|Deepin*|2 7|deepin.txt|e02c2b95d2e74cc5fc69f58401ccfeae1c76703cea08ca2c727cbff866c02d33
+distro||DesaOS|2 7|desaos.txt|9a31b22f1b0d2f24a6baa43c0bbb385585e988377709960c0c8db8ed1b7fdf3a
+distro|devuan|Devuan*|5 7|devuan.txt|cb84b25f13d8369937ff52103763ea792d0743b5b984920bdd0d70875b4377ab
+distro||DracOS*|1 7 3|dracos.txt|03325de3605bdec7c48b5cc8042233bb35811ce13d9bb20c05487edc2811c34b
+distro||DarkOs|1 6 5 3 2|darkos.txt|4d5f4917e175aa29191f7fc5c00e373fb0e425a1648b0c060eb95dde6f302978
+distro||Itc*|1|itc.txt|6f36f42eb6ac0bb229993388eb51751fcf4d7f40926b8c92f452c133691af6ad
+distro||dragonfly_old*|1 7 3|dragonfly-old.txt|4a14c9c46c56278c116382fadd9d59f700e06356364df172df5422abcfa6a740
+distro||dragonfly_small*|1 7 3|dragonfly-small.txt|1ff284ac8ab80e8aed94c556f1371132a26325d4beeaf0e74ac8a822075d70f5
+distro||DragonFly*|1 7 3|dragonfly.txt|e7055383313083c2f3f234a6524d663f11031d0160ce45f08d7ce3d3374b5513
+distro||Drauger*|1 7|drauger.txt|60f2cb14d833394511456ad6c13b51f405a79dca54a34e915bc441fff36fef74
+distro||elementary_small*|4 7 1|elementary-small.txt|4a3e77de9ab43142bc8e393f579be1f0d484d30bf2d164ac2e0656590d295deb
+distro|elementary|Elementary*|4 7 1|elementary.txt|3bf08c136be46fed661062b169c521e1ce89bb9ac3f73c48bb82837e8bf3e400
+distro|endeavouros|EndeavourOS*|1 5 4|endeavouros.txt|683c83f8c87e5a8336689221c342ec03cac719532fced8a5577dbae25cac1d0e
+distro||Endless*|1 7|endless.txt|93a859f5b1a8870a35022578b6387480819724b5d7f7f386500dc703bbfa07d2
+distro||EuroLinux*|4 7|eurolinux.txt|c9ad7f687335b1026b0ecd8507565cd11e3cc96e7dc395206e10ab7b0a0ae9df
+distro|exherbo|Exherbo*|4 7 1|exherbo.txt|eec444ee6923ad404ea8425c5935bd8c45dc57765ab9730fefee070f0ea398d3
+distro||fedora_small|12|fedora-small.txt|f2074ca363b7300801eee0e99ff7bf23a38ca5b724e40de238122fbeec83d9aa
+distro||*Asahi*|3 2 1 8 7 6 4|asahi.txt|038b9385b0dfbd370daed3bca4b1b4a3d30a1e87803feeeffaf2560609d8c454
+distro||Fedora_old*,RFRemix*|4 7 1|fedora-old.txt|e54a465f46af4dbe392b49954e8cb5168856bb6baab7d9c1a0e69a31bbed63d4
+distro|fedora|Fedora*|12 7|fedora.txt|6482e0b7630f327164e3e76ba03e02a793cedb8222d16aa334b02103dc5aa05f
+distro||Feren*|4 7 1|feren.txt|d47cc3ad6648c4206ae64c1e59dfe047bb03db7ad931a7ea01d80d0337b8279b
+distro||freebsd_small|1 7 3|freebsd-small.txt|cfae18bfcb04132da61e04cad9cb7072c15bc1ca7c24b0f5b07ed65f04615ad7
+distro||HardenedBSD*,FreeBSD*HardenedBSD*|4 7 3|freebsd.txt|aa59162d469b7ee4f88fc7b74ae07463c930119a56a83f9ddf49442b75b977a4
+distro|freebsd|FreeBSD*|1 7 3|freebsd.txt|aa59162d469b7ee4f88fc7b74ae07463c930119a56a83f9ddf49442b75b977a4
+distro||FreeMiNT*|7|freemint.txt|8c1039e81cdb28879d2a10364a5f405ece10de2fc2806476494c24f8bddcce77
+distro||Frugalware*|4 7 1|frugalware.txt|519652a55b112e2694665a75192ec477d0653ad8c0aefdee0955bbce2793fd9e
+distro||Funtoo*|5 7|funtoo.txt|5f7d8034401315aa8cdaaaabf76d9dff8efb64e2ca24494eabd4aec7a2a88aa8
+distro||GalliumOS*|4 7 1|galliumos.txt|c2f04046f80c6e6eb03ce282a12cbf48806b362280195dec348ec37ee9a141a3
+distro|garuda|Garuda*|7 7 3 7 2 4|garuda.txt|037ca6431e00db987eab62e0d1a77bcefb500c62f7eee9a40417054379b1f361
+distro||gentoo_small|5 7|gentoo-small.txt|fc4995f46cca9c9cd4901938746c29de252b2e3150ab23621ba2bd20275ad2dc
+distro|gentoo|Gentoo*|5 7|gentoo.txt|857e30f1e6abd8ba7b030d4939e99c30d530503f742634c4a216b43c56fb0767
+distro||Pentoo*|5 7|pentoo.txt|77e155b68f59aa8faa60a27d07699a18e1da3b83f5b74ad52360eeb8b189daf0
+distro||glaucus*|5|glaucus.txt|ae67c56b6a6daa39893a353cc02ddea9fb93a45f58db846ce950e77cd34844e2
+distro||gNewSense*|4 5 7 6|gnewsense.txt|99a098b33203fd4b1b17e9e185eecef009e06f9e9f32cf39a641f03fbff1a241
+distro||GNOME*|4|gnome.txt|c2823f4c5ecd74400c1433ab37eb2e93e59ca5c7da31d2a8089dcc4e91377304
+distro||GNU|fg 7|gnu.txt|a4da5098f593df445b95a9634337dc4d636ce9f88786e4141f8e6ca311f867fa
+distro||Riinux*|4 7|riinux.txt|333b2a763b97ff9d42e6bf545f80cebfd7511ab83a0ead8dfbce640ed3e5f817
+distro||Splendian*|2 2 1|splendian.txt|653ff914c238b8ba5b9f59ac45bdfc9ee25696ee271782c20b9ddbdc87aa45c6
+distro||GoboLinux*|5 4 6 2|gobolinux.txt|d14328a69f948d9f94b50efb652d4c72566d7853b3b3e76ec484683b715c2e6e
+distro||Grombyang*|4 2 1|grombyang.txt|842e067f17c88fce2ce4af5f45cbe5d24eaeb23aa14ae352d5f35b14842731d9
+distro||guix_small*|3 7 6 1 8|guix-small.txt|ee4def769f020a483586d52483fa4e23e70d478abf9a24c6ecc1232f11b16190
+distro|guix|Guix*|3 7 6 1 8|guix.txt|6239d65d1508bf40cdb228e5ca0114fd38546dbcb02a230205186cb20903fed9
+distro||haiku_small*|2 8|haiku-small.txt|2fbc5f9fb77cb792c6988d105b655a342ddeea2dd83183a853496bc6211088d6
+distro||Haiku*|1 3 7 2|haiku.txt|42118ec1ad5b6a0beb8833391e9eca810865f468228f78b50f41b2fabae6cee3
+distro||Huayra*|4 7|huayra.txt|a196750c2161a95ce820ac92097b614e90e7e253eb2199020978722e42f79a9f
+distro||HydroOS*|1 2 3 4 5|hydroos.txt|89c39407b11c7af4fd477fbe627b16cdb6769227ff61acde4e8a2222e03d4891
+distro||hyperbola_small*|8|hyperbola-small.txt|7b0ef8ab6dcc3ea3d4579b7f7ebbd5ee36bfab8cd50f529f099bdfa0de30fed8
+distro||Hyperbola*|8|hyperbola.txt|da9e43f8907028c97c03008d4766175e091e053242ea565e583326610bf797e3
+distro||iglunix*,iglu*|8|iglunix.txt|74bcfe8f422a5962676c95592a06dcead92b8ccaec2ec54b9225eab33dbaecef
+distro||januslinux*,janus*,Ataraxia Linux*,Ataraxia*|4 5 6 2|januslinux.txt|25b3bdf57fe1f6d30e9153450557d596ab9f65e82876a062af009c77d1162ac7
+distro||Kaisen*|1 7 3|kaisen.txt|36cf1747224f7a21331dcdf6c9d5414d164837668cb663acc16d61a6f1e512ed
+distro|kali|Kali*|4 8|kali.txt|110e8144f19c90c2b4914e2745a99c4b7f0f3e2fbebe7a7741542575009ab509
+distro|kaos|KaOS*|4 7 1|kaos.txt|3441d7c0ec3cfa66f86655f72fe0841560772e34883510b35ad1b66a0dc9e05e
+distro|neon|KDE*|2 7|kde.txt|fcf3c4ad46c98ccb6f4a541e0fcf2a745ad84f3ee8e8b0f5f50c729da69bed93
+distro||Kibojoe*|2 7 4|kibojoe.txt|17b3ce8afae10c4f51c9287915fdc9cbaf2391e1b473d3e637c4d13f208dbfa6
+distro||Kogaion*|4 7 1|kogaion.txt|5fca31f84604838d7d3d3b7ff84fff77f01d167819588f0cdb6e9919183e8334
+distro||Korora*|4 7 1|korora.txt|efa4e67961f654850f2b4efb525964d357f9856e57e89a9cf4bd5edc58d11ab7
+distro||KSLinux*|4 7 1|kslinux.txt|716ed1f0152bcebe4a9bd2be910d030a8d621ddf8e85a7941dc8bcdcde0580e4
+distro||Kubuntu*|4 7 1|kubuntu.txt|1ebe4d6416a8a41cfc117115db3bb2fbc8cbcdaa968aadfd4ca2f4652ff2e341
+distro||LEDE*|4 7 1|lede.txt|f0de0cd7e892ecfeb2f48976b47e482ebab4889fc9250a29e2d93fbba234f4d2
+distro||LaxerOS*|7 4|laxeros.txt|8b5ef44730869f554cffd342af8ffc9400193688012ed54d1ed34747af599c25
+distro||LibreELEC*|2 3 7 14 13|libreelec.txt|2a39ce35dbe7e7ec2fb9ebaf7e164dd84e5d2f67107d2b0ff29cf075fa5f04a9
+distro||Linux|fg 8 3|linux.txt|5fee447a6294d045704f59fc8d536ae67ef649031e7b1f1253f02931829506e2
+distro||linuxlite_small*|3 7|linuxlite-small.txt|59ffc676cc22f495aaeb8b3d0d9bf50c2d3e8b58e61bdb9bd1e0ca9291abf9e3
+distro||Linux Lite*,Linux_Lite*|3 7|linux-lite.txt|e4c90b2160d877937801c474df27b7f43c94cc4e8e2b7d5b186209575bcb9e4e
+distro||LMDE*|2 7|lmde.txt|88439c10890ed5550d81a010d91e576c02cf54089d71c4c96a0e1da64e34ae66
+distro||Lubuntu*|4 7 1|lubuntu.txt|05254a6d55a7901fab123ef8f9907f0278f26e561a36aa87c689ec0ce3e752d2
+distro||Lunar*|4 7 3|lunar.txt|3c847633c395e7317f013b59189f2ef2c9c501204afb07a1dd7afaa60c2b9801
+distro||mac*_small|2 3 1 5 4|mac-small.txt|8f160d651d007e02bf6df725a740b9220d7aa4df92b064b3d4b4322dabdb4b54
+distro||mac*,Darwin|2 3 1 1 5 4|mac.txt|ebac36f4a21feae20dc999bfead3e158c4f9b82945edef8bbef09638141d5009
+distro||mageia_small*|6 7|mageia-small.txt|5dbd4df3dce730d9ba07885d16b7ffaeff25dc9dd4026354a40eebada37d65ff
+distro|mageia|Mageia*|6 7|mageia.txt|c6918a96e10b0d2ea1cee53d21fd989ab1ac9b4ca06b69aabbc2872b61c489cb
+distro||MagpieOS*|2 1 3 5|magpieos.txt|e02f879eb233d6757c0ec00b5b0b40d3002ba54d0edc6509be2c126eb414b6d8
+distro||Mandriva*,Mandrake*|4 3|mandriva.txt|dcff01837975ff515ee4b4cbd0923c84c4402a64e0a25b0a2578fe6b6c754052
+distro||manjaro_small*|2 7|manjaro-small.txt|87e26d4936b072ba54071898d82582e0d3ed4eeebe15f77d5b69815737199a04
+distro|manjaro|Manjaro*|2 7|manjaro.txt|99abd2cc10d73a4558a9bba43c39b2fb9297b9071e1280ebcb2eb012607b4994
+distro||TeArch*|39 7 1|tearch.txt|394d75920c3538d714b526b21b6db9c7bdc771f33bbe107ae3bff3ba8d00019b
+distro||Maui*|6 7|maui.txt|47096a446e2c1b7d2706b86aec38475a60877a3966007dd3d9a84a4c6857abd2
+distro||Mer*|4 7 1|mer.txt|0f85bef03a776ef163e26418d1a4ab3d308f98ab176812fcab0648950566b55c
+distro||Minix*|1 7 3|minix.txt|5701c2da422c99e44e3d26e67a66ec0f9db1299f1ab59d4fb8653b5061efae13
+distro||linuxmint_small*|2 7|linuxmint-small.txt|da451e761d29d2ff997cc7668c8d4af28e6553da16c7a3eb17cd580ffffc9ecd
+distro||Linux Mint Old*,LinuxMintOld*,mint_old*|2 7|linux-mint-old.txt|3f5ed3de65f68d974728282d6103cc9c00aea181b536eaffbb0e2ffb995d5355
+distro|linuxmint|Linux Mint*,LinuxMint*,mint*|2 7|linux-mint.txt|aba63ad1eb0164c6cdee04e753ae9e2684d058a1446dd6ebdb9055949eb8a446
+distro||Live Raizo*,Live_Raizo*|3|live-raizo.txt|d76d47b486577bb4b363800da4ead65ae5d19bd407ad65c5bcfbc1ff3ca8e160
+distro||mx_small*|4 6 7|mx-small.txt|1b6c2eafaf6333fc1abdb536bd451e5938716b160e6820eed49d3030f4a786f4
+distro|mx|MX*|4 6 7|mx.txt|99934b396decba6aa0154ab01f042bedf252dab47983f0c4291b00bbb4966d28
+distro||Namib*|1|namib.txt|bd50f5ec00b20925617042bf9bae1745e310f267be9acee1f91a1de1d3978b0f
+distro||Neptune*|7|neptune.txt|b3cfdf74d0f6e4722514654b83f82557e4cb3bf3caac6373a0eb0a2fa2646f0f
+distro||netbsd_small*|5 7|netbsd-small.txt|da11f7973de652b797c410204b1c64991b07786d96ba232dcbbe856b32bd7dcf
+distro||NetBSD*|5 7|netbsd.txt|e7607238e0c55c0401f56541e33c9bc1275c64aea39b6e732eaa83de36d25f9e
+distro||Netrunner*|4 7 1|netrunner.txt|f81fac0db483123ebe0469a0d0a30f9201cd3748cfa12cf501266b1b83ae440b
+distro||Nitrux*|4|nitrux.txt|a19559ae64b686f5576ddb5ae9ffe9c1889714125cc0cd21afed83235c97332b
+distro||nixos_small|4 6|nixos-small.txt|11547823324be37ab592ecfda0ef71c249efa0342ec3dc408fe428e74744c7c0
+distro||nixos_old*|4 6|nixos-old.txt|125cda8b3a67d728ea3a7575e7d1bf6f527e0e0e1620f5a5dcb0a4e4697d584e
+distro|nixos|NixOS*|4 6|nixos.txt|d3482f0812421899df82ce076c1a7ed3d07875db55238c9a5cafa8f348860835
+distro||Nurunner*|4|nurunner.txt|8e0f82c5c2dfd840986cbc5fa0c3e7f1702ba428f253d2645bd30948d5184790
+distro||NuTyX*|4 1|nutyx.txt|3ddcb88492867ebeb59b65b13ba08759583af2e8ded36ecdd19a70e425db0c3a
+distro||OBRevenge*|1 7 3|obrevenge.txt|796e7493bcd96b0a60b09bb9750a854dde6c67140d488c18fa5d7eec7619e062
+distro||openbsd_small|3 7 6 1 8|openbsd-small.txt|980c47f35909abee73854e54d42b5ff7b4539d77148ebf839e94aa9fece4cb46
+distro||OpenBSD*|3 7 6 1 8|openbsd.txt|6384bf4efc69205894c340e37f49a49ec09ddecbb99f3e20c294b2b891d11deb
+distro|openEuler|openEuler*|4 7 1|openeuler.txt|99b18a24978bc87ae45ddfb786901bb2fc86e75c44fe4b6750777f9e8262df23
+distro||OpenIndiana*|4 7 1|openindiana.txt|75bb5f088838da6efe9f9d2dcdb60884ecf149ca0477f28d8f64d16b0c09fdee
+distro||openmamba*|7 2|openmamba.txt|29f4b71a58547a37c0a7f98a2ef99058fcff0893bba712a7c0e32f88557b6d13
+distro|openmandriva|OpenMandriva*|4|openmandriva.txt|190da48eb71bc3260e9040053caed046fa0412db1de1773631ae0f2f085f41d6
+distro||OpenStage*|2|openstage.txt|4094d669e0c462f006aa3c2751c21004c8b9067f5b7b58682e97e1418c741ede
+distro|openwrt|OpenWrt*|4 7 1|openwrt.txt|666e0058197fe72fcefea35ee19029d6fc4c7f7fa5eca8721995b3c9beed2270
+distro||Open Source Media Center*,osmc|4 7 1|open-source-media-center.txt|f918e710f35d65659f41c11983ef14c837a9d90c4e1fa2c0962869893ebc987c
+distro|ol|Oracle*|1 7 3|oracle.txt|99fffec121d4b214c46cdc6cea17a57825dd5cb734eec8a1080701936ac2132f
+distro||OS Elbrus*|4 7 3|os-elbrus.txt|aa3cf1283e1a8cb5bc880af83a0bcd813e4c5b118604430285db83e3f4d90eb5
+distro||PacBSD*|1 7 3|pacbsd.txt|6d02caa31a809307ab2bdad83aec4767259b24e79af35c5b3b0b98d9a687de6e
+distro||parabola_small*|5 7|parabola-small.txt|9d8b4c3a393139edec4bda65b2af51236c2f7ff6a3898735987ffe4ef5287bbc
+distro|parabola|Parabola*|5 7|parabola.txt|1bc3501fc0539bbf303f445a149dd2f8e2c0709919f22e112b5d18747dda0862
+distro||Pardus*|3 7 6 1 8|pardus.txt|8b141c3da69b892ce4632093bdb204f4471466beff4e2a91a21c610f529824f1
+distro|parrot|Parrot*|6 7|parrot.txt|25f2b5eee5e48f88f33876c5f6dd0daabffaefb6ba1dd7335c7d267ae5c0cd2a
+distro||Parsix*|3 1 7 8|parsix.txt|9df6eb082fb649b7dbdfa2dca842974e2682df4a4abffbe17045052c1efbb134
+distro||PCBSD*,TrueOS*|1 7 3|pcbsd.txt|23f6a5400fd9b9dc71c571becd1d03265eaccbfe495e7efa72756b69b7e1b533
+distro||PCLinuxOS*|4 7 1|pclinuxos.txt|5a07cd54099ea37ce5a23d3f291f2a5ab86697fddeaab7702efdd349c3cd130d
+distro||Pengwin*|5 5 13|pengwin.txt|eb09f548eabc7af3909ddec11af42ac0d3592cad06e787f3444a78026c1d9101
+distro||Peppermint*|1 15 3|peppermint.txt|11c2858e5878fe5ea6b87101b80e0d5fdf63aa8eac6aea8f9cef73d6077781ea
+distro||Pisi*|12 7 6 1 8|pisi.txt|f59488892eb2d04eb48101a213b7990a1a3191482bf621002941f26254795670
+distro||PNM Linux*,WHPNM Linux*|33 9 15 202|pnm-linux.txt|6d7c70dc377def6c82540c8f73791121229244e18349c898b488dd326638d829
+distro||popos_small*,pop_os_small*|6 7|popos-small.txt|a85fa357dd47f7ca4e764167b5878c52541f53cc0e1250621093346efb8d4feb
+distro|pop|Pop!_OS*,popos*,pop_os*|6 7|pop-os.txt|de44d7db399cdeb3658cc6166d98ad0e4cb8aec35f131249bfb92b3d33a2b883
+distro||Porteus*|6 7|porteus.txt|1cfef9861329314f58c564b81258d13f3d5678f38937aea4e14f906e02665a84
+distro||postmarketos_small|2 7|postmarketos-small.txt|b62836fd2006689ff038c0bdc2539187ca0c5b272f7a60f8f2017b2fc52d9462
+distro|postmarketos|PostMarketOS*|2 7|postmarketos.txt|31345aa033f4135b3c654507c5d8fe22c808ed4251790e1bdf7855838a198e13
+distro||PuffOS*|3|puffos.txt|3fe8e2ef4b28f346191f5fe93703194b45d64a96c322b425951dc1ed7e9f73d9
+distro||Proxmox*|7 202|proxmox.txt|964ebf790bd1c31170413b694ac5dfd200504e85b6058cff3e96c4a33499bd85
+distro||Puppy*,Quirky Werewolf*,Precise Puppy*|4 7|puppy.txt|71bc03a19c5bc33fc4096b6c9fdf9059d0c791d7fa144868189980fbfe854af0
+distro||pureos_small*|2 7 7|pureos-small.txt|1c009c4a9c352bbbad7a50857b763171b60ec57d1205474457bb5ec6e49423ed
+distro|pureos|PureOS*|2 7 7|pureos.txt|693d460b273909457ec71eca9b21b5673d72acdca2aced9d9fa82f8d518c4530
+distro||Qubes*|4 5 7 6|qubes.txt|0b7ea1afa80ea2d7adb3fe804782f4bdaccb7a9d9680f79a7a7e7c422064e106
+distro||Qubyt*|4 5 0 4|qubyt.txt|b7e580aee5d846b9a7a2f24ec434e4e47c038767b1c4f1b5b0a492697cc2a377
+distro||Quibian*|3 7|quibian.txt|867123668b921d651f9470df837fb27a5a9aa7221452736dedcc55f7e7b4fd1a
+distro||Radix*|1 2|radix.txt|145810987e42055c8761e75342cadbc3d26070a6d6fa0e9ae619297ee61761a5
+distro||Raspbian_small*|2 1|raspbian-small.txt|2132598594f2f8a6c666dbae7f11f06821225d6ab063ef07ef55555b04c5f5c3
+distro|raspbian|Raspbian*|2 1|raspbian.txt|b1d7b21d517886e95c6685ce28a365d4e80f74dae04f74fe96427c0e36c34fdb
+distro||Reborn OS*,Reborn*|2 2 8|reborn-os.txt|389cdadd3b205abc5980ebdc0f0848f0933389e5c659febd2c8cd823ec5d0204
+distro||Red Star*,Redstar*|1 7 3|red-star.txt|44df693e8f5973b681ba935b79c2138062195e008716e639d3865af88de2d0f4
+distro||Redcore*|1|redcore.txt|5e6189ddfd8ae43b618f644285adeae811fbfc8dfddae79ea3cc30a6500a4341
+distro||redhat_old,rhel_old*|1 7 3|redhat-old.txt|d81da659a73c5aaa81aa131fd78d2891222d244d1551cf896e2fb9cf6f672a88
+distro|rhel|Redhat*,Red Hat*,rhel*|1|redhat.txt|055b3dd96fcc4647e0aa12b94b8ae34a584eaa87613fdd1bb41f3c210e3cbc67
+distro||Refracted Devuan*,Refracted_Devuan*|8 7|refracted-devuan.txt|b33186e5cdc78dcd72f037e357ef063a2bff28e30082952ac1fcb3427f05771a
+distro||Regata*|7 1 4 5 3 2|regata.txt|0d3574bb4fef4f4d2f5443a7df65cef2ab720e93e576587e5050a5d1f373d295
+distro||Regolith*|1|regolith.txt|257e1637c7d5098248c80bc520c7066b0b2e13fba330cc8c8f27059022651a80
+distro||rocky_small*|2|rocky-small.txt|6b71c86b9b1df438820d98cf600b24391bbdc73ff1588130f3d230940dcbdb9c
+distro|rocky|rocky*|35|rocky.txt|1614e4138fa84605380a551a2b3c43ecf2a25907e9bb829df41969e74092f336
+distro||Rosa*|4 7 1|rosa.txt|48399900c9e5e25c2cf1ef326b5e9ba32745a74aefa1f494741310ce1b9d55e4
+distro||sabotage*|4 7 1|sabotage.txt|da1c8802946334cdcf46b99fbd1f23b01820fc5f323711f1c4866abd77196168
+distro|sabayon|Sabayon*|4 7 1|sabayon.txt|622750accf6d3ab2806c9ee7eb6bfcf7ec2b77a1f8322480d79fb68b9361344c
+distro||Sailfish*|4 5 7 6|sailfish.txt|427d5a2232f5d938c00a01ea0ec40f2c6610559c29680a0da2b063cf56d7f91d
+distro||SalentOS*|2 1 3 7|salentos.txt|2ae7f7cfe06b88579541bc0698de7e664b11c5a753b109515793409a3e89c1da
+distro||Scientific*|4 7 1|scientific.txt|94f688ba0d231c4735b615e68ca9a93a87032ce9a7f0afd936c9fe0fdd626e96
+distro||Septor*|4 7 4|septor.txt|ffbc0653def7848172f8213b98a2a3461e515ddcaa4cf00c36c8a36dd7e96880
+distro||Serene*|6 6|serene.txt|c2d9c3d33dab14568566402d7796abfa69ce1a9c9e67cac83ad90f98f143facf
+distro||SharkLinux*|4 7|sharklinux.txt|215dff2eb476da2e5e40202dd81d53eba89b976b9352a1653bf48eeef5ba0450
+distro|siduction|Siduction*|4 4|siduction.txt|038cc01d31892f7ec3130da766bc9caa0ffeaa333edcbc012c5fc44cc54b9193
+distro||slackware_small*|4 7 1|slackware-small.txt|253a64bc7b10ea3e3e5635279bd9922a66de8948d2c16c381bf185dc12545466
+distro|slackware|Slackware*|4 7 1|slackware.txt|5af2d8e10bd433679267f522ee72bd8868f62b967c1b749d09073af595af0293
+distro||SliTaz*|3 3|slitaz.txt|d49975f02e8b1a1359a3ef6f70a0929f70fa4fc52d442cba663749c6b2389d25
+distro||SmartOS*|6 7|smartos.txt|9a2ed646c28b297ba7ef4c3b2151e2c947d6fcbc0a2f95ebd01934a95f352216
+distro||SkiffOS*|4 7|skiffos.txt|49ecafba1361d8ee91fdc212a9acf8dd0e87b943f50961438bdca8b0fed26001
+distro|solus|Solus*|4 7 1|solus.txt|3dfa7a37da39371a4c92f309a5c41993de3636900b0b0dfeb3cd836724441cb0
+distro||Source Mage*,Source_Mage*|4 7 1|source-mage.txt|df8260c37b103fb12ce073441938f6233c99c20c003898c5404e27351e0be124
+distro||Sparky*|1 7|sparky.txt|418010704c2a183697a0bca42a97f31077d5a68bef84a83bb242e700aed6f937
+distro||Star*|7|star.txt|e183e094441d2ad6ef5b698b118e527e95585eca38c09f019f4e1472c63727dc
+distro|steamos|SteamOS*|5 7|steamos.txt|db81f1a9f81f40fa94d667de201e5dd6ea53e5e5f29713ef48874e6a0131845a
+distro||sunos_small,solaris_small|3 7|sunos-small.txt|7805aae1505b6dfb87df4d1f21f20443e3ae1daf132bcc060da02cae5fd8249e
+distro||SunOS,Solaris|3 7|sunos.txt|d998ca9c8adeb178945b01eead34647ffd36fcb57a345024f051473e89c173a2
+distro|opensuse-leap|openSUSE Leap*,openSUSE_Leap*|2 7|opensuse-leap.txt|5e177b51ba0e4f6a2ab02e7484ac93d5a8ad3b3c11649c82c765e09326693ad4
+distro||t2*|7 4|t2.txt|54122395badffabddfc274f681e3ddb09243fd8f1b53665d19eb87881a06fa3f
+distro|opensuse-tumbleweed|openSUSE Tumbleweed*,openSUSE_Tumbleweed*|2 7|opensuse-tumbleweed.txt|4edadff6658be950585b96fbc1955f7c7c7be3f3b731896ede775ec2d4b3b175
+distro||opensuse_small,suse_small*|2 7|opensuse-small.txt|757d0824e11f32e821490f4b7451a4feda7fc3cc17873853f2b30804c8504cb7
+distro|opensuse suse sles|openSUSE*,open SUSE*,SUSE*|2 7|opensuse.txt|1be00b29f604d40b57eb15c47d375c99527dc162d59bb3ed2916bd82ac4cbeb8
+distro||SwagArch*|4 7 1|swagarch.txt|872fb0d29834c9ff922fea409a5058ac769fef6a2644a3496c34e90c0f22fc29
+distro||Tails*|5 7|tails.txt|e00098710666e70a1f6c66e1360621070dc299406b946856ead5adf66367c4d4
+distro|trisquel|Trisquel*|4 6|trisquel.txt|63787cc0b1f8116d9710ae8d6f2229f7a491f08406e6229c40cf2dfa5702daaf
+distro||Ubuntu Cinnamon*,Ubuntu-Cinnamon*|1 7|ubuntu-cinnamon.txt|12ab423afc887058f8bde54859d47ba3d44ddc07b52c229fd77134bd41c3398d
+distro||Ubuntu Budgie*,Ubuntu-Budgie*|4 7 1|ubuntu-budgie.txt|110ff32b6623ee8488c6692b2293997280e5106a13e015036adfe6ad42eb9fbd
+distro||Ubuntu-GNOME*|4 5 7 6|ubuntu-gnome.txt|dfbdaf750dcae0c199ec0950644eb53b0b66bd9dd0bc8c8c2cceb73bfd1fb1c8
+distro||Ubuntu MATE*,Ubuntu-MATE*|2 7|ubuntu-mate.txt|40a9f8daa276819980d99920ed65d9c2ea93dbc41276c541bdac54f65b4e9349
+distro||ubuntu_old|1 7 3|ubuntu-old.txt|98035a8eaf21aeb77e70088ed1f1460540cb2108dac10a249f39e6b427d6229e
+distro||Ubuntu Studio*,Ubuntu-Studio|6 7|ubuntu-studio.txt|9c7f29d2c3899bd9551d0ddfcaf02eaa54a706a3aa318b8d1976b5e6fa0e83c2
+distro||ubuntu_small|1 7 3|ubuntu-small.txt|9137181d918676ab3a801ce92b198c10c675095d0ae5125bd2a892350a2b81e2
+distro|ubuntu|Ubuntu*,i3buntu*|1 7 3|ubuntu.txt|80110a826b90df6e5d6941498a1dd3410004566ea0622110416c863d42517ad2
+distro||Univention*|1 7|univention.txt|ca863634f821ac54961d5a0996a43697ea2ba4c12fff27d47f9acb362c8e916b
+distro||Venom*|8 4|venom.txt|196a2adca149a979e212f8cc1d51daaccc138d886fcaa68d7d1f5f775d92e375
+distro||void_small|2 8|void-small.txt|6a15ba0d196a4e827c5de0be2c53378f988f51a82b8bfd5239be6ab1d9422cc6
+distro|void|Void*|2 8|void.txt|54ced32f9620df4ac2e4098061b49766415f7879b0e45c2059a323b4e86afce7
+distro||VNux*|11 8 15 1 7|vnux.txt|5a558efb0bed0c14c4f7ca71295229cd34731739bfd1374badd456a2e8458270
+distro||LangitKetujuh*|7 4|langitketujuh.txt|531bcbe4439b14e3391191833dd3d05d70efbd1a22a9f2f6074c240faa4c7c94
+distro||semc*|2 8 1|semc.txt|0dbe6735ee06b5f7b1636067f89d0012becf41a73bf423f8a2e0d6aae591924a
+distro||Obarun*|6 6 7 1|obarun.txt|84c069a6d253605f6a572cf896945a4e078d4444dd1f4097f429e5a94d93a588
+distro||Windows 11*,windows11|6 7|windows-11.txt|6ece5c38cace8baf225f55da3a91badb3077f7bb758755721ba4937ab0b0d95f
+distro||Windows 10*,windows10,windows8|6 7|windows-10.txt|680a23418ed87ff2ae95f8ae619b451649d596cbab4962e6281b68bdd283e351
+distro||Windows*|1 2 4 3|windows.txt|02141d80af10459a246a0c7fd450da76551b67fa6939e9345c5c76429a8a4c75
+distro||Xubuntu*|4 7 1|xubuntu.txt|216646b107a62b5e5b3f7b9491e0a4410c545a0ef70ce94d445cfb8eb85604c7
+distro||IRIX*|4 7|irix.txt|3bda1470ae793ee9374189d3fadc2b58899cf75631ea5a9bbe45bd167b896f44
+distro|zorin|Zorin*|4 6|zorin.txt|b4cc761ba1f7cbeb490aeeac82c0bf23c67f10316eedb96b53a59d0cce6b06a7
+kernel||*BSD|1 7 4 3 6|kernel-bsd.txt|9b25c1e416d46693e319170b27f3c3f99fc2540ff187337999e716530ea9b3f3
+kernel||Darwin|2 3 1 1 5 4|kernel-darwin.txt|e938d3702995b3eb7490ee0de0b52f34825c5f6bdd73d86ea1af0275603fb154
+kernel||GNU*|fg 7|kernel-gnu.txt|a4da5098f593df445b95a9634337dc4d636ce9f88786e4141f8e6ca311f867fa
+kernel||Linux|fg 8 3|kernel-linux.txt|5fee447a6294d045704f59fc8d536ae67ef649031e7b1f1253f02931829506e2
+kernel||Profelis SambaBOX*,SambaBOX*|3 6|kernel-profelis-sambabox.txt|cde3f009fadf1ce26637c82ae014c73c7bde797a3df1c65a4f610a3cca32d3e3
+kernel||SunOS|3 7|kernel-sunos.txt|d998ca9c8adeb178945b01eead34647ffd36fcb57a345024f051473e89c173a2
+kernel||IRIX*|4 7|kernel-irix.txt|3bda1470ae793ee9374189d3fadc2b58899cf75631ea5a9bbe45bd167b896f44

@@ -1,0 +1,727 @@
+#!/usr/bin/env bash
+# vim: noai:ts=4:sw=4:expandtab
+#
+# neofetch-edit: view, edit and check neofetch's data files (hw/*.db and
+# ascii/distros.db) before installing, packaging or building the single-file
+# script. Every change is checked first, so a typo can't break neofetch.
+#
+# Run './neofetch-edit help' for the commands, './neofetch-edit cli' for a menu.
+
+usage() {
+    printf '%s\n' "Usage: neofetch-edit [-d dir] <command>
+
+Databases: apple (hw/apple.db), gpu (hw/gpu.db), cpu (hw/cpu.db),
+           logos (ascii/distros.db)
+
+    list                          The databases and how many rows they have
+    show <db> [text]              Numbered rows, optionally only those with <text>
+    add  <db> [--at N] [value]... Add a row (asks for the values not given)
+    set  <db> <row> <column> <value>
+                                  Change one value. <column> is a name or number
+    rm   <db> <row>               Remove a row
+    mv   <db> <row> <to>          Move a row (rules and logos are tried in order)
+    edit <db>                     Open the file in \$EDITOR, then check it
+    check [db]                    Check every file, or one
+    try  gpu|cpu <name>           What a hardware name is cleaned up to
+    try  apple <identifier>       The table row for a device, e.g. iPhone17,1
+    try  logo <distro>            The logo a distro name gets
+    rehash                        Refresh the logo checksums after editing art
+    single [file]                 Build the single-file script (neofetch --single)
+    cli                           Interactive menu
+
+<row> is the number from 'show', or the identifier (apple) / file name (logos).
+-d dir picks the data directory (default: where this script is, else
+/opt/neofetch)."
+}
+
+fail() { printf '%s\n' "neofetch-edit: $*" >&2; return 1; }
+
+# --- databases ---------------------------------------------------------------
+
+db_names=(apple gpu cpu logos)
+
+# use_db <name>: db_name, db_kind, db_file (relative), db_cols, db_key
+# (index of the column that names a row, -1 for none), db_desc.
+use_db() {
+    case $1 in
+        apple)
+            db_name=apple db_kind=apple db_file=hw/apple.db db_key=0
+            db_cols=(identifier model cpu gpu)
+            db_desc="Apple devices (iOS / iPadOS)"
+        ;;
+        gpu)
+            db_name=gpu db_kind=rules db_file=hw/gpu.db db_key=-1
+            db_cols=(match action pattern text)
+            db_desc="GPU name rules"
+        ;;
+        cpu)
+            db_name=cpu db_kind=rules db_file=hw/cpu.db db_key=-1
+            db_cols=(match action pattern text)
+            db_desc="CPU name rules"
+        ;;
+        logos|logo|ascii|distros)
+            db_name=logos db_kind=logos db_file=ascii/distros.db db_key=4
+            db_cols=(kind ids patterns colors file sha256)
+            db_desc="Distro logos"
+        ;;
+        "") fail "which database? (${db_names[*]})"; return 1 ;;
+        *)  fail "unknown database '$1' (${db_names[*]})"; return 1 ;;
+    esac
+
+    db_path="${dir}/${db_file}"
+    [[ -f $db_path ]] || { fail "${db_path} doesn't exist"; return 1; }
+}
+
+col_hint() {
+    case ${db_kind}:$1 in
+        apple:identifier) hint="uname -m on the device, e.g. iPhone17,1" ;;
+        apple:model)      hint="e.g. iPhone 16 Pro" ;;
+        apple:cpu)        hint="e.g. Apple A18 Pro (6) @ 4.04GHz" ;;
+        apple:gpu)        hint="e.g. Apple A18 Pro GPU" ;;
+        rules:match)      hint="glob the original name has to fit, e.g. Intel* or *" ;;
+        rules:action)     hint="del, sub, inner, keep, default, brand or type" ;;
+        rules:pattern)    hint="glob to remove/replace/keep; may be empty for inner, default, brand, type" ;;
+        rules:text)       hint="replacement / brand / default text, or dedicated|integrated for type" ;;
+        logos:kind)       hint="distro, or kernel for the last-resort logos" ;;
+        logos:ids)        hint="os-release IDs, space separated; ID:VARIANT_ID for a variant; may be empty" ;;
+        logos:patterns)   hint="distro name globs, comma separated, e.g. Pop!_OS*,popos*" ;;
+        logos:colors)     hint="colors for \${c1} \${c2} ..., e.g. 4 7 1" ;;
+        logos:file)       hint="art file in ascii/, e.g. mydistro.txt" ;;
+        *)                hint= ;;
+    esac
+}
+
+# split_row <row>: the columns of a row, in 'fields'.
+split_row() {
+    local rest=$1 i
+
+    fields=()
+    for ((i = 1; i < ${#db_cols[@]}; i++)); do
+        [[ $rest == *"|"* ]] || break
+        fields+=("${rest%%|*}")
+        rest=${rest#*|}
+    done
+    fields+=("$rest")
+}
+
+join_row() {
+    local IFS='|'
+    row="${fields[*]}"
+}
+
+# load <file>: every line in 'lines'; 'rows' holds the line index of each
+# data row (not a comment, not blank), so row N is lines[rows[N-1]].
+load() {
+    local line i=0
+
+    lines=() rows=()
+    while IFS= read -r line || [[ $line ]]; do
+        lines+=("$line")
+        [[ $line == \#* || -z ${line//[[:space:]]} ]] || rows+=("$i")
+        i=$((i + 1))
+    done < "$1"
+}
+
+save() {
+    local tmp="${db_path}.tmp.$$"
+
+    printf '%s\n' "${lines[@]}" > "$tmp" && mv -f "$tmp" "$db_path" ||
+        { rm -f "$tmp"; fail "can't write ${db_path}"; return 1; }
+}
+
+# find_row <number | key>: the row number, in 'rown'.
+find_row() {
+    local ref=$1 k
+
+    [[ $ref ]] || { fail "which row? (number from 'show ${db_name}')"; return 1; }
+
+    if [[ $ref =~ ^[0-9]+$ ]]; then
+        ((ref >= 1 && ref <= ${#rows[@]})) ||
+            { fail "no row ${ref} in ${db_name} (1-${#rows[@]})"; return 1; }
+        rown=$ref
+        return 0
+    fi
+
+    ((db_key >= 0)) ||
+        { fail "rows of '${db_name}' are picked by number (see 'show ${db_name}')"; return 1; }
+
+    for ((k = 0; k < ${#rows[@]}; k++)); do
+        split_row "${lines[rows[k]]}"
+        [[ ${fields[db_key]} == "$ref" ]] && { rown=$((k + 1)); return 0; }
+    done
+
+    fail "no row '${ref}' in ${db_name}"
+}
+
+# find_col <name | number>: the column index, in 'coln'.
+find_col() {
+    local i
+
+    for ((i = 0; i < ${#db_cols[@]}; i++)); do
+        [[ $1 == "${db_cols[i]}" || $1 == "$((i + 1))" ]] && { coln=$i; return 0; }
+    done
+
+    fail "no column '$1' in ${db_name} (${db_cols[*]})"
+}
+
+# --- checks ------------------------------------------------------------------
+
+# row_error <row>: sets 'row_err' and fails if the row is malformed.
+row_error() {
+    local row=$1 pipes
+
+    row_err=
+    pipes=${row//[!|]}
+    ((${#pipes} == ${#db_cols[@]} - 1)) || {
+        row_err="expected ${#db_cols[@]} columns (${db_cols[*]}), got $((${#pipes} + 1))"
+        return 1
+    }
+
+    [[ $row == *[[:cntrl:]]* ]] && { row_err="has a tab or control character"; return 1; }
+
+    split_row "$row"
+
+    case $db_kind in
+        apple)
+            [[ ${fields[0]} =~ ^[A-Za-z]+[0-9]+,[0-9]+$ ]] ||
+                row_err="identifier '${fields[0]}' doesn't look like 'iPhone17,1'"
+            [[ ${fields[1]}${fields[2]}${fields[3]} ]] ||
+                row_err="model, cpu and gpu are all empty"
+        ;;
+
+        rules)
+            [[ ${fields[0]} ]] || row_err="match is empty (use * for every name)"
+
+            case ${fields[1]} in
+                del|sub|keep)
+                    [[ ${fields[2]} ]] || row_err="'${fields[1]}' needs a pattern"
+                    [[ ${fields[1]} != sub && ${fields[3]} ]] &&
+                        row_err="'${fields[1]}' takes no text"
+                ;;
+                inner)
+                    [[ ${fields[2]}${fields[3]} ]] && row_err="'inner' takes no pattern or text"
+                ;;
+                default|brand)
+                    [[ ${fields[3]} ]] || row_err="'${fields[1]}' needs a text"
+                ;;
+                type)
+                    [[ ${fields[3]} == dedicated || ${fields[3]} == integrated ]] ||
+                        row_err="type has to be dedicated or integrated"
+                ;;
+                *) row_err="unknown action '${fields[1]}' (del sub inner keep default brand type)" ;;
+            esac
+        ;;
+
+        logos)
+            [[ ${fields[0]} == distro || ${fields[0]} == kernel ]] ||
+                row_err="kind has to be distro or kernel"
+            [[ ${fields[1]} =~ ^[A-Za-z0-9._:\ -]*$ ]] ||
+                row_err="ids may only have letters 0-9 . _ - : and spaces"
+            [[ ${fields[2]} ]] || row_err="patterns is empty"
+            [[ ${fields[3]} =~ ^[a-z0-9\ ]+$ ]] ||
+                row_err="colors may only have a-z 0-9 and spaces (e.g. '4 7 1' or 'fg 8 3')"
+            [[ ${fields[5]} =~ ^[0-9a-f]{64}$ ]] ||
+                row_err="sha256 isn't 64 hex digits (run 'neofetch-edit rehash')"
+
+            if [[ ! ${fields[4]} =~ ^[a-z0-9._-]+\.txt$ ]]; then
+                row_err="file '${fields[4]}' has to be a lower-case name ending in .txt"
+            elif [[ ! -f "${dir}/ascii/${fields[4]}" ]]; then
+                row_err="ascii/${fields[4]} doesn't exist"
+            fi
+        ;;
+    esac
+
+    [[ -z $row_err ]]
+}
+
+# check_file <file>: check every row of the current database as stored in
+# <file>. Prints the problems, counts them in 'problems' and 'warnings'.
+check_file() {
+    local file=$1 line n=0 seen="|" key sum
+
+    problems=0 warnings=0
+
+    while IFS= read -r line || [[ $line ]]; do
+        n=$((n + 1))
+        [[ $line == \#* || -z ${line//[[:space:]]} ]] && continue
+
+        row_error "$line" || {
+            printf '%s\n' "${db_file}: line ${n}: ${row_err}"
+            problems=$((problems + 1))
+            continue
+        }
+
+        ((db_key >= 0)) && [[ $db_kind == apple ]] && {
+            key=${fields[db_key]}
+            [[ $seen == *"|${key}|"* ]] && {
+                printf '%s\n' "${db_file}: line ${n}: '${key}' is listed twice"
+                problems=$((problems + 1))
+            }
+            seen+="${key}|"
+        }
+
+        [[ $db_kind == logos ]] && {
+            sum=$(file_sha256 "${dir}/ascii/${fields[4]}")
+
+            [[ $sum && $sum != "${fields[5]}" ]] && {
+                printf '%s\n' "${db_file}: line ${n}: checksum of ${fields[4]} is out of date (run 'neofetch-edit rehash')"
+                problems=$((problems + 1))
+            }
+
+            # Each art file once, even when several rows share it.
+            [[ $seen == *"|${fields[4]}|"* ]] && continue
+            seen+="${fields[4]}|"
+
+            ascii_art_ok "${dir}/ascii/${fields[4]}" || {
+                printf '%s\n' "${db_file}: line ${n}: warning: ascii/${fields[4]} breaks the art rules (escape sequence, backslash before a color or at the end, or too big)"
+                warnings=$((warnings + 1))
+            }
+        }
+    done < "$file"
+
+    [[ $(tail -c 1 "$file" | wc -l) -eq 1 || ! -s $file ]] || {
+        printf '%s\n' "${db_file}: no newline at the end of the file"
+        problems=$((problems + 1))
+    }
+
+    ((problems == 0))
+}
+
+# rehash_file <file>: refresh the sha256 column of a distros.db.
+rehash_file() {
+    local file=$1 line sum out= changed=0
+
+    while IFS= read -r line || [[ $line ]]; do
+        if [[ $line != \#* && $line == *"|"*"|"*"|"*"|"*"|"* ]]; then
+            split_row "$line"
+
+            [[ -f "${dir}/ascii/${fields[4]}" ]] &&
+                sum=$(file_sha256 "${dir}/ascii/${fields[4]}") &&
+                [[ $sum && $sum != "${fields[5]}" ]] && {
+                    fields[5]=$sum
+                    join_row
+                    line=$row
+                    changed=$((changed + 1))
+                }
+        fi
+
+        out+="$line"$'\n'
+    done < "$file"
+
+    ((changed)) && printf '%s' "$out" > "$file"
+    rehashed=$changed
+}
+
+# --- commands ----------------------------------------------------------------
+
+cmd_list() {
+    local name
+
+    printf '%s\n' "Data directory: ${dir}"
+    for name in "${db_names[@]}"; do
+        use_db "$name" 2>/dev/null || { printf '  %-6s %s\n' "$name" "(missing)"; continue; }
+        load "$db_path"
+        printf '  %-6s %-18s %4d rows  %s\n' "$name" "$db_file" "${#rows[@]}" "$db_desc"
+    done
+}
+
+cmd_show() {
+    local k shown=0 text=${2:-} cols
+
+    use_db "$1" || return 1
+    load "$db_path"
+
+    cols=${db_cols[*]}
+    printf '%s\n' "${db_file}: ${cols// / | }"
+
+    shopt -s nocasematch
+    for ((k = 0; k < ${#rows[@]}; k++)); do
+        [[ -z $text || ${lines[rows[k]]} == *"$text"* ]] || continue
+        printf '%4d  %s\n' "$((k + 1))" "${lines[rows[k]]}"
+        shown=$((shown + 1))
+    done
+    shopt -u nocasematch
+
+    [[ $text ]] && printf '%s\n' "${shown} of ${#rows[@]} rows"
+    return 0
+}
+
+# ask_fields [current values]: ask for each column on the terminal.
+# With current values, an empty answer keeps the value and '-' clears it.
+ask_fields() {
+    local i answer editing=$#
+    local current=("$@")
+
+    for ((i = 0; i < ${#db_cols[@]}; i++)); do
+        # The checksum is worked out from the art file.
+        [[ ${db_cols[i]} == sha256 ]] && { fields[i]=${current[i]:-}; continue; }
+        [[ ${fields[i]+set} && $editing -eq 0 ]] && continue
+
+        col_hint "${db_cols[i]}"
+        [[ $hint ]] && printf '    (%s)\n' "$hint"
+
+        if ((editing)); then
+            read -r -p "  ${db_cols[i]} [${current[i]}]: " answer || return 1
+            case $answer in
+                "") fields[i]=${current[i]} ;;
+                -)  fields[i]= ;;
+                *)  fields[i]=$answer ;;
+            esac
+        else
+            read -r -p "  ${db_cols[i]}: " answer || return 1
+            fields[i]=$answer
+        fi
+    done
+}
+
+# put_row <row> <N | "">: insert before data row N, or at the end.
+put_row() {
+    local at=$2 idx
+
+    if [[ $at ]]; then
+        idx=${rows[at - 1]}
+        lines=("${lines[@]:0:idx}" "$1" "${lines[@]:idx}")
+    else
+        lines+=("$1")
+    fi
+}
+
+# finish_row: fill in the checksum for logos, join, and check 'fields'.
+finish_row() {
+    [[ $db_kind == logos ]] && {
+        fields[5]=${fields[5]:-}
+        [[ -f "${dir}/ascii/${fields[4]}" ]] &&
+            fields[5]=$(file_sha256 "${dir}/ascii/${fields[4]}")
+    }
+
+    join_row
+    row_error "$row" || { fail "$row_err"; return 1; }
+}
+
+cmd_add() {
+    local at= k key
+
+    use_db "$1" || return 1
+    shift
+    load "$db_path"
+
+    [[ $1 == --at ]] && {
+        at=$2
+        [[ $at =~ ^[0-9]+$ ]] && ((at >= 1 && at <= ${#rows[@]})) ||
+            { fail "--at needs a row number (1-${#rows[@]})"; return 1; }
+        shift 2
+    }
+
+    # Without values, ask for them. Values left off the end are empty.
+    (($# > ${#db_cols[@]})) && { fail "too many values (${db_cols[*]})"; return 1; }
+
+    fields=("$@")
+    if (($# == 0)); then
+        [[ -t 0 ]] || { fail "give the values: ${db_cols[*]}"; return 1; }
+        ask_fields || return 1
+    else
+        while ((${#fields[@]} < ${#db_cols[@]})); do fields+=(""); done
+    fi
+
+    finish_row || return 1
+
+    ((db_key >= 0)) && {
+        key=${fields[db_key]}
+        for ((k = 0; k < ${#rows[@]}; k++)); do
+            split_row "${lines[rows[k]]}"
+            [[ $db_kind == apple && ${fields[db_key]} == "$key" ]] &&
+                { fail "'${key}' already exists (row $((k + 1))); use 'set'"; return 1; }
+        done
+    }
+
+    put_row "$row" "$at"
+    save && printf '%s\n' "Added to ${db_file}: ${row}"
+}
+
+cmd_set() {
+    local value=$4
+
+    use_db "$1" || return 1
+    (($# == 4)) || { fail "usage: set ${db_name} <row> <column> <value>"; return 1; }
+    load "$db_path"
+    find_row "$2" || return 1
+    find_col "$3" || return 1
+
+    split_row "${lines[rows[rown - 1]]}"
+    fields[coln]=$value
+    finish_row || return 1
+
+    lines[rows[rown - 1]]=$row
+    save && printf '%s\n' "Row ${rown} of ${db_file}: ${row}"
+}
+
+# Change every column of a row, asking on the terminal.
+cmd_change() {
+    use_db "$1" || return 1
+    load "$db_path"
+    find_row "$2" || return 1
+
+    split_row "${lines[rows[rown - 1]]}"
+    ask_fields "${fields[@]}" || return 1
+    finish_row || return 1
+
+    lines[rows[rown - 1]]=$row
+    save && printf '%s\n' "Row ${rown} of ${db_file}: ${row}"
+}
+
+cmd_rm() {
+    local idx old
+
+    use_db "$1" || return 1
+    load "$db_path"
+    find_row "$2" || return 1
+
+    idx=${rows[rown - 1]}
+    old=${lines[idx]}
+    lines=("${lines[@]:0:idx}" "${lines[@]:idx + 1}")
+    save && printf '%s\n' "Removed from ${db_file}: ${old}"
+}
+
+cmd_mv() {
+    local idx old to=$3
+
+    use_db "$1" || return 1
+    load "$db_path"
+    find_row "$2" || return 1
+    [[ $to =~ ^[0-9]+$ ]] && ((to >= 1 && to <= ${#rows[@]})) ||
+        { fail "move to which position? (1-${#rows[@]})"; return 1; }
+    ((to == rown)) && return 0
+
+    idx=${rows[rown - 1]}
+    old=${lines[idx]}
+
+    # Take the row out, then put it back at the line row <to> was on:
+    # moving up that is before it, moving down (one line gone) after it.
+    lines=("${lines[@]:0:idx}" "${lines[@]:idx + 1}")
+    idx=${rows[to - 1]}
+    lines=("${lines[@]:0:idx}" "$old" "${lines[@]:idx}")
+
+    save && printf '%s\n' "Moved row ${rown} to ${to} in ${db_file}"
+}
+
+cmd_edit() {
+    local tmp answer editor=${VISUAL:-${EDITOR:-vi}}
+
+    use_db "$1" || return 1
+    tmp=$(mktemp "${TMPDIR:-/tmp}/neofetch-edit.XXXXXX") || return 1
+    cp "$db_path" "$tmp"
+
+    while :; do
+        # Unquoted on purpose: EDITOR may carry arguments.
+        # shellcheck disable=2086
+        $editor "$tmp" || { rm -f "$tmp"; fail "editor failed, nothing changed"; return 1; }
+
+        [[ $db_kind == logos ]] && rehash_file "$tmp"
+        check_file "$tmp" && break
+
+        read -r -p "${problems} problem(s). Edit again? [Y/n] " answer ||
+            answer=n
+        [[ $answer == [nN]* ]] && { rm -f "$tmp"; printf '%s\n' "Nothing changed."; return 1; }
+    done
+
+    if cmp -s "$tmp" "$db_path"; then
+        printf '%s\n' "No changes."
+        rm -f "$tmp"
+    else
+        cat "$tmp" > "$db_path" && printf '%s\n' "Saved ${db_file}."
+        rm -f "$tmp"
+    fi
+}
+
+cmd_check() {
+    local name note bad=0 names=("${db_names[@]}")
+
+    [[ $1 ]] && names=("$1")
+
+    for name in "${names[@]}"; do
+        use_db "$name" || { bad=1; continue; }
+        load "$db_path"
+
+        if check_file "$db_path"; then
+            note=
+            ((warnings)) && note=", ${warnings} warning(s)"
+            printf '%s\n' "${db_file}: ok (${#rows[@]} rows${note})"
+        else
+            printf '%s\n' "${db_file}: ${problems} problem(s)"
+            bad=1
+        fi
+    done
+
+    return "$bad"
+}
+
+cmd_rehash() {
+    use_db logos || return 1
+    rehash_file "$db_path"
+    printf '%s\n' "${db_file}: ${rehashed} checksum(s) updated"
+}
+
+cmd_try() {
+    local what=$1
+    shift
+
+    [[ $* ]] || { fail "usage: try gpu|cpu|apple|logo <text>"; return 1; }
+
+    # neofetch matches names case-insensitively.
+    shopt -s nocasematch
+
+    case $what in
+        gpu)
+            if gpu_clean "$*"; then
+                printf '%s\n' "${gpu}  (${gpu_kind})"
+            else
+                printf '%s\n' "(not shown: no rule in hw/gpu.db matches this name)"
+            fi
+        ;;
+
+        cpu)
+            hw_rules cpu.db "$*"
+            printf '%s\n' "$hw_val"
+        ;;
+
+        apple)
+            if hw_apple "$*"; then
+                printf '%s\n' "model: ${hw_model}" "cpu:   ${hw_cpu}" "gpu:   ${hw_gpu}"
+            else
+                printf '%s\n' "(not in hw/apple.db)"
+            fi
+        ;;
+
+        logo|logos)
+            # Without the logos downloaded by '--update_ascii'.
+            XDG_DATA_HOME="${dir}/.no-downloads" "${dir}/neofetch" --ascii_distro "$*" -L
+        ;;
+
+        *) shopt -u nocasematch; fail "try gpu, cpu, apple or logo"; return 1 ;;
+    esac
+
+    shopt -u nocasematch
+    return 0
+}
+
+cmd_single() {
+    "${dir}/neofetch" --single ${1:+"$1"}
+}
+
+# --- interactive menu --------------------------------------------------------
+
+menu_db() {
+    local line cmd a b rest
+
+    while :; do
+        use_db "$1" || return
+        load "$db_path"
+
+        printf '\n%s\n' "[${db_name}] ${db_file}: ${#rows[@]} rows (${db_cols[*]})"
+        printf '%s\n' "  l)ist   f)ind <text>   a)dd [at row]   e)dit <row>   d)elete <row>" \
+                      "  m)ove <row> <to>   t)ry <text>   o)pen in editor   c)heck   b)ack"
+        read -r -p "${db_name}> " line || return
+        read -r cmd a b <<< "$line"
+        rest=${line#"$cmd"}
+        rest=${rest# }
+
+        case $cmd in
+            l|list)   cmd_show "$db_name" ;;
+            f|find)   cmd_show "$db_name" "$rest" ;;
+            a|add)    if [[ $a ]]; then cmd_add "$db_name" --at "$a"; else cmd_add "$db_name"; fi ;;
+            e|edit)   cmd_change "$db_name" "$a" ;;
+            d|delete) cmd_rm "$db_name" "$a" ;;
+            m|move)   cmd_mv "$db_name" "$a" "$b" ;;
+            o|open)   cmd_edit "$db_name" ;;
+            c|check)  cmd_check "$db_name" ;;
+            b|back|q) return ;;
+            "")       ;;
+
+            t|try)
+                case $db_name in
+                    logos) cmd_try logo "$rest" ;;
+                    *)     cmd_try "$db_name" "$rest" ;;
+                esac
+            ;;
+
+            *) printf '%s\n' "Unknown choice '${cmd}'." ;;
+        esac
+    done
+}
+
+menu() {
+    local choice i
+
+    [[ -t 0 ]] || { fail "'cli' needs a terminal"; return 1; }
+
+    while :; do
+        printf '\n'
+        cmd_list
+        printf '%s\n' "" "  Pick a database by name or number (1-${#db_names[@]})," \
+                      "  c) check everything   s) build the single-file script   q) quit"
+        read -r -p "> " choice || return 0
+
+        case $choice in
+            q|quit|exit) return 0 ;;
+            c|check)     cmd_check ;;
+            s|single)    cmd_single ;;
+            "")          ;;
+
+            [1-9])
+                i=$((choice - 1))
+                [[ ${db_names[i]} ]] && menu_db "${db_names[i]}"
+            ;;
+
+            *) use_db "$choice" && menu_db "$db_name" ;;
+        esac
+    done
+}
+
+# --- main --------------------------------------------------------------------
+
+self="${BASH_SOURCE[0]:-$0}"
+[[ $self == */* ]] && dir=${self%/*} || dir=.
+
+if [[ $1 == -d ]]; then
+    [[ -d $2 ]] || { fail "-d needs a directory"; exit 1; }
+    dir=$2
+    shift 2
+elif [[ ! -d "${dir}/hw" && -d /opt/neofetch/hw ]]; then
+    dir=/opt/neofetch
+fi
+
+case ${1:-help} in
+    help|-h|--help) usage; exit 0 ;;
+esac
+
+[[ -f "${dir}/neofetch" ]] ||
+    { fail "no 'neofetch' script in ${dir} (use -d <dir>)"; exit 1; }
+
+# Borrow neofetch's own functions (name rules, checksums, art checks), so
+# 'try' and 'check' can't disagree with what neofetch does.
+# shellcheck disable=1090,1091
+NEOFETCH_LIB=1 source "${dir}/neofetch" ||
+    { fail "can't load ${dir}/neofetch"; exit 1; }
+
+# Only this directory's files, not the downloaded logos or /opt.
+data_dirs=("$dir")
+shopt -u nocasematch
+
+cmd=$1
+shift
+
+case $cmd in
+    list|ls)   cmd_list ;;
+    show)      cmd_show "$@" ;;
+    add)       cmd_add "$@" ;;
+    set)       cmd_set "$@" ;;
+    rm|del)    cmd_rm "$@" ;;
+    mv)        cmd_mv "$@" ;;
+    edit)      cmd_edit "$@" ;;
+    check)     cmd_check "$@" ;;
+    try)       cmd_try "$@" ;;
+    rehash)    cmd_rehash ;;
+    single)    cmd_single "$@" ;;
+    cli|menu)  menu ;;
+    *)         fail "unknown command '${cmd}' (see 'neofetch-edit help')"; exit 1 ;;
+esac

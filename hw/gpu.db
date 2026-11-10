@@ -1,0 +1,59 @@
+# GPU name rules (Linux: names from pci.ids / lspci).
+#
+# match|action|pattern|text
+#
+# Every row whose 'match' fits the original name is applied, top to bottom.
+# 'match' and 'pattern' are shell globs, case-insensitive; write \[ and \(
+# for a literal bracket. A name that fits no row isn't shown.
+#
+#   del      remove every 'pattern'
+#   sub      replace every 'pattern' with 'text'
+#   inner    keep only the text inside the last [brackets]
+#   keep     protect the first 'pattern' from the rules below
+#   default  use 'text' if nothing is left of the name
+#   brand    put 'text' in front unless the name has it. 'pattern' is
+#            optional: the original name has to fit it. First one wins.
+#   type     'text' is dedicated or integrated, for --gpu_type. Last one
+#            wins. Without it, Intel is integrated and the rest dedicated.
+#
+# './neofetch-edit try gpu "<name>"' shows what a name turns into.
+
+# AMD: 'Advanced Micro Devices, Inc. [AMD/ATI] Navi 23 [Radeon RX 6600]'
+Advanced Micro Devices*|del|\[AMD/ATI\]|
+Advanced Micro Devices*|del|\[AMD\]|
+Advanced Micro Devices*|del|OEM |
+Advanced Micro Devices*|del|Advanced Micro Devices, Inc.|
+Advanced Micro Devices*|inner||
+Advanced Micro Devices*|brand|*AMD*ATI*|AMD ATI
+Advanced Micro Devices*|brand||AMD
+
+# NVIDIA: 'NVIDIA Corporation GA102 [GeForce RTX 3080]'
+NVIDIA*|del|Corporation|
+NVIDIA*|inner||
+NVIDIA*|brand||NVIDIA
+
+# Intel: 'Intel Corporation DG2 [Arc A770]',
+#        'Intel Corporation Meteor Lake-P [Intel Arc Graphics]',
+#        'Intel Corporation HD Graphics 6000'
+Intel*|del|Corporation|
+Intel*|del|\(R\)|
+Intel*|del|\(TM\)|
+Intel*|inner||
+Intel*|sub|*Intel|Intel
+Intel*|del| \(*|
+Intel*|del|Integrated Graphics Controller|
+Intel*|sub|*Xeon*|Intel HD Graphics
+Intel*|default||Intel Integrated Graphics
+Intel*|brand||Intel
+
+# Intel cards (Arc A/B series, Arc Pro, Iris Xe MAX) are dedicated; the
+# 'Arc Graphics' built into Core Ultra (... Lake) chips is not.
+Intel*DG[12] *|type||dedicated
+Intel*Battlemage*|type||dedicated
+Intel*Arc [AB][0-9]*|type||dedicated
+Intel*Arc Pro*|type||dedicated
+Intel*Iris Xe MAX*|type||dedicated
+Intel*Lake*|type||integrated
+
+*MCST*|sub|*MCST*MGA2*|MCST MGA2
+*VirtualBox*|sub|*|VirtualBox Graphics Adapter
