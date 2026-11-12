@@ -128,3 +128,6 @@ Art rules:
   adding a logo. Check art-only output, output with system info, and
   `--stdout` for leaked formatting.
 - Draw original art or use art from an MIT-compatible source and credit it.
+
+## 5. Modding
+if wished the neofetch-s script can be edited to run just one ascii art of a company e.g.
